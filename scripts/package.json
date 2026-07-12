@@ -1,0 +1,12 @@
+{
+  "name": "firebase-migration",
+  "version": "1.0.0",
+  "description": "Script de migración: data.json → Firebase Firestore",
+  "scripts": {
+    "migrate": "node migrate_to_firebase.js"
+  },
+  "dependencies": {
+    "firebase": "^12.15.0",
+    "firebase-admin": "^12.7.0"
+  }
+}

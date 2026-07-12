@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Calidad - Materias Primas e Insumos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      var div = document.createElement('div');
+      div.style.position = 'fixed';
+      div.style.top = '0';
+      div.style.left = '0';
+      div.style.width = '100%';
+      div.style.background = '#ef4444';
+      div.style.color = '#fff';
+      div.style.padding = '15px';
+      div.style.zIndex = '999999';
+      div.style.fontFamily = 'monospace';
+      div.style.fontSize = '12px';
+      div.style.whiteSpace = 'pre-wrap';
+      div.textContent = 'ERROR JS DETECTADO:\n' + message + '\nEn: ' + source + ' (Línea ' + lineno + ':' + colno + ')\n' + (error ? error.stack : '');
+      document.body.appendChild(div);
+    };
+  </script>
+  <div class="container">
+    <header>
+      <div class="brand-section">
+        <h1>Control de Materias Primas, Insumos y Servicios</h1>
+        <p>Registro y seguimiento de documentación técnica por materia prima, fabricante y proveedor.</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary" id="btn-new-supplier">➕ Nuevo Registro</button>
+        <button class="btn-secondary" id="btn-sync-excel">🔄 Sincronizar Excel</button>
+        <div class="scan-badge">
+          <span>Última actualización: <strong id="last-update">-</strong></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Workspace Tabs Navigation -->
+    <div class="main-tabs">
+      <button class="main-tab-btn active" id="tab-btn-planilla">📊 Planilla de Materias Primas</button>
+      <button class="main-tab-btn" id="tab-btn-catalogos">🗂️ Gestión de Catálogos (Fabricantes, Proveedores, Categorías)</button>
+      <button class="main-tab-btn" id="tab-btn-documentacion">📋 Checklists de Documentos Requeridos</button>
+      <button class="main-tab-btn" id="tab-btn-excel">📊 Importar / Exportar Excel</button>
+    </div>
+
+    <!-- TAB 1: PLANILLA (Dashboard Layout) -->
+    <div class="dashboard-layout tab-content-view" id="content-planilla">
+      <!-- Filters Sidebar -->
+      <aside class="sidebar-panel">
+        <h2 class="panel-title"><span>🔍</span> Filtros y Búsqueda</h2>
+
+        <div class="filter-group">
+          <label class="filter-label" for="search-input">Búsqueda rápida</label>
+          <input type="text" id="search-input" class="input-search" placeholder="Buscar materia prima, código...">
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-type">Categoría</label>
+          <select id="filter-type" class="select-custom">
+            <option value="all">Todas las Categorías</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-fabricante">Fabricante</label>
+          <select id="filter-fabricante" class="select-custom">
+            <option value="all">Todos los fabricantes</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-distribuidor">Proveedor / Distribuidor</label>
+          <select id="filter-distribuidor" class="select-custom">
+            <option value="all">Todos los proveedores</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-haccp">Riesgo HACCP</label>
+          <select id="filter-haccp" class="select-custom">
+            <option value="all">Todos los niveles</option>
+            <option value="Alto">🔴 Alto</option>
+            <option value="Medio">🟡 Medio</option>
+            <option value="Bajo">🟢 Bajo</option>
+            <option value="NA">⚪ N/A</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="filter-status">Estado Documental</label>
+          <select id="filter-status" class="select-custom">
+            <option value="all">Todos los estados</option>
+            <option value="complete">Completos (3/3)</option>
+            <option value="pending">Con pendientes</option>
+            <option value="missing_ft">Sin Ficha Técnica</option>
+            <option value="missing_cert">Sin Certificación</option>
+            <option value="cert_expiring">Certificación por vencer</option>
+          </select>
+        </div>
+
+        <!-- Document Definitions Panel -->
+        <div class="education-box">
+          <h5>Glosario de Documentos</h5>
+          <div class="edu-item">
+            <strong>FT (Ficha Técnica):</strong> Especificaciones y parámetros de calidad emitidos por el fabricante.
+          </div>
+          <div class="edu-item">
+            <strong>Acta Sanitaria:</strong> Reporte sanitario que valida la inocuidad en el establecimiento.
+          </div>
+          <div class="edu-item">
+            <strong>Certificación:</strong> Certificados GFSI (FSSC 22000, ISO, BRC) del proveedor.
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Contents Area -->
+      <main class="main-content">
+        <!-- Stats Section -->
+        <div class="stats-grid">
+          <div class="stat-card primary">
+            <div class="stat-icon">🧪</div>
+            <div class="stat-info">
+              <h3>Materias Primas</h3>
+              <p id="stat-unique-materials">0</p>
+            </div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-icon">🏭</div>
+            <div class="stat-info">
+              <h3>Proveedores</h3>
+              <p id="stat-total-suppliers">0</p>
+            </div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+              <h3>Completos (3/3)</h3>
+              <p id="stat-complete-count">0</p>
+            </div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-info">
+              <h3>Con Pendientes</h3>
+              <p id="stat-incomplete-count">0</p>
+            </div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-icon">📁</div>
+            <div class="stat-info">
+              <h3>Total Archivos</h3>
+              <p id="stat-total-files">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-header">
+          <span class="results-count" id="results-count">0 registros</span>
+        </div>
+        <div class="table-outer-wrapper" id="supplier-grid">
+          <!-- Populated by app.js -->
+        </div>
+      </main>
+    </div>
+
+    <!-- TAB 2: GESTIÓN DE CATÁLOGOS (Fabricantes, Proveedores, Categorías) -->
+    <div class="tab-content-view" id="content-catalogos" style="display:none;">
+      <div class="catalog-dashboard">
+        <div class="catalog-sidebar">
+          <h2 class="panel-title">🗂️ Panel de Catálogos</h2>
+          
+          <div class="form-group" style="margin-bottom:20px;">
+            <label class="form-label" for="catalog-select-type">Seleccione catálogo a administrar</label>
+            <select id="catalog-select-type" class="form-select" style="width:100%;">
+              <option value="folder_types">📁 Categorías de Carpeta</option>
+              <option value="entities">🏢 Catálogo de Entidades (Fabricantes / Proveedores / Clientes)</option>
+            </select>
+          </div>
+
+          <div id="catalog-context-info" class="catalog-info-box" style="margin-bottom:20px;padding:14px;border-radius:var(--radius-sm);font-size:0.85rem;background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.3);color:var(--text-secondary);">
+            <!-- Context text populated dynamically -->
+          </div>
+
+          <!-- Add new element form -->
+          <div class="catalog-add-form">
+            <h3 style="font-size:1rem;margin-bottom:12px;color:var(--text-primary);" id="catalog-form-title">➕ Registrar Nuevo Elemento</h3>
+            <input type="hidden" id="catalog-edit-index" value="">
+            
+            <div class="form-group" style="margin-bottom:10px;">
+              <label class="form-label" for="catalog-new-item-input">Nombre / Razón Social <span style="color:var(--danger-color)">*</span></label>
+              <input type="text" id="catalog-new-item-input" class="form-input" placeholder="Ej: BELCHEM S.A.">
+            </div>
+            
+            <div class="form-group" id="catalog-folder-group" style="margin-bottom:10px;">
+              <label class="form-label" for="catalog-new-folder-input" id="catalog-folder-label">Nombre de Carpeta Física</label>
+              <input type="text" id="catalog-new-folder-input" class="form-input" placeholder="Auto-generado si se deja vacío">
+            </div>
+
+            <!-- New fields requested -->
+            <div class="form-group" id="catalog-nit-group" style="margin-bottom:10px;">
+              <label class="form-label" for="catalog-new-nit-input">NIT (Identificación Tributaria)</label>
+              <input type="text" id="catalog-new-nit-input" class="form-input" placeholder="Ej: 900.123.456-7">
+            </div>
+            
+            <div class="form-group" id="catalog-contact-group" style="margin-bottom:10px;">
+              <label class="form-label" for="catalog-new-contact-input">Número de Contacto</label>
+              <input type="text" id="catalog-new-contact-input" class="form-input" placeholder="Ej: +57 300 123 4567">
+            </div>
+
+            <div class="form-group" id="catalog-cert-group" style="margin-bottom:10px;">
+              <label class="form-label" for="catalog-new-cert-input">Certificaciones de Calidad</label>
+              <input type="text" id="catalog-new-cert-input" class="form-input" placeholder="Ej: ISO 9001, FSSC 22000">
+            </div>
+
+            <!-- Roles checkbox group for Unified Catalog -->
+            <div class="form-group" id="catalog-roles-group" style="margin-bottom:12px; display:none; color:var(--text-primary);">
+              <label class="form-label" style="margin-bottom:6px;">Roles de la Entidad (Marque todos los que apliquen)</label>
+              <div style="display:flex; flex-direction:column; gap:6px; font-size:0.85rem;">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                  <input type="checkbox" id="catalog-role-fabricante" checked>
+                  <span>🏭 Fabricante</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                  <input type="checkbox" id="catalog-role-proveedor" checked>
+                  <span>🚚 Proveedor / Distribuidor</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                  <input type="checkbox" id="catalog-role-cliente">
+                  <span>👥 Cliente</span>
+                </label>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;">
+              <button class="btn-secondary" id="btn-catalog-cancel-edit" style="display:none;flex:1;background:#4b5563;">Cancelar</button>
+              <button class="btn-primary" id="btn-catalog-add-item" style="flex:2;">➕ Registrar y Crear Carpeta</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="catalog-main-content">
+          <div class="catalog-header-search">
+            <h2 style="margin:0;font-size:1.3rem;color:var(--text-primary);">Elementos Registrados</h2>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <input type="text" id="catalog-search-input" class="input-search" placeholder="🔍 Buscar en catálogo..." style="min-width:260px;">
+              <span id="catalog-count-badge" class="badge badge-info" style="font-size:0.85rem;padding:6px 12px;border-radius:6px;">0</span>
+            </div>
+          </div>
+          <div id="catalog-items-list" class="catalog-list-grid">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: CHECKLIST DE DOCUMENTOS REQUERIDOS -->
+    <div class="tab-content-view" id="content-documentacion" style="display:none;">
+      <div class="config-dashboard">
+        <div style="max-width:800px;margin:0 auto;background:var(--glass-bg);border:1px solid var(--glass-border);padding:30px;border-radius:var(--radius-md);box-shadow:var(--shadow-lg);">
+          <h2 class="panel-title" style="margin-bottom:12px;border-bottom:1px solid var(--border-color);padding-bottom:10px;">📋 Checklists de Documentos Requeridos</h2>
+          <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:20px;">
+            Habilite o deshabilite los documentos técnicos que influyen en el control de calidad de las materias primas.
+          </p>
+          <div style="margin-bottom:20px;">
+            <input type="text" id="config-search-input" class="input-search" placeholder="🔍 Buscar tipo de documento requerido..." style="width:100%;">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;" id="config-checklist-list">
+            <!-- Populated dynamically -->
+          </div>
+          <div style="display:flex;justify-content:flex-end;">
+            <button class="btn-primary" id="btn-save-config" style="padding:12px 24px;">💾 Guardar Configuración de Documentos</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: IMPORTAR / EXPORTAR EXCEL -->
+    <div class="tab-content-view" id="content-excel" style="display:none;">
+      <div class="config-dashboard">
+        <div style="max-width:800px;margin:0 auto;background:var(--glass-bg);border:1px solid var(--glass-border);padding:30px;border-radius:var(--radius-md);box-shadow:var(--shadow-lg); display:flex; flex-direction:column; gap:24px;">
+          <h2 class="panel-title" style="margin-bottom:12px;border-bottom:1px solid var(--border-color);padding-bottom:10px;">📊 Importar / Exportar Consolidado Excel</h2>
+          
+          <!-- Download Section -->
+          <div class="excel-section-card" style="padding:20px; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:var(--radius-sm);">
+            <h3 style="margin-bottom:8px; display:flex; align-items:center; gap:8px; color:var(--text-primary); font-size:1.1rem;">📥 Descargar Consolidado</h3>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:16px;">
+              Descarga la base de datos completa de materias primas y proveedores en un archivo de Excel (`.xlsx`) con el formato oficial consolidado de doble cabecera.
+            </p>
+            <button class="btn-primary" id="btn-export-excel" style="display:flex; align-items:center; gap:8px; padding:10px 20px;">
+              Descargar Archivo Excel (.xlsx)
+            </button>
+          </div>
+
+          <!-- Upload Section -->
+          <div class="excel-section-card" style="padding:20px; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:var(--radius-sm);">
+            <h3 style="margin-bottom:8px; display:flex; align-items:center; gap:8px; color:var(--text-primary); font-size:1.1rem;">📤 Cargar Consolidado</h3>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:16px;">
+              Sube un archivo de Excel consolidado para poblar o actualizar la base de datos de materias primas. El archivo debe respetar las 18 columnas reglamentarias.
+            </p>
+            
+            <div class="form-group" style="margin-bottom:16px;">
+              <label class="form-label" style="margin-bottom:6px;">Modo de Importación</label>
+              <div style="display:flex; gap:20px; font-size:0.9rem; color:var(--text-primary);">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                  <input type="radio" name="excel-import-mode" value="merge" checked>
+                  Fusión de Datos (Actualiza existentes, conserva archivos subidos)
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                  <input type="radio" name="excel-import-mode" value="overwrite">
+                  Sobrescribir (Limpiar base de datos y cargar desde cero)
+                </label>
+              </div>
+            </div>
+
+            <!-- Drop Zone -->
+            <input type="file" id="excel-file-input" style="display:none;" accept=".xlsx, .xls">
+            <div class="file-upload-zone" id="excel-drop-zone" style="padding:30px; text-align:center; border:2px dashed var(--glass-border); border-radius:var(--radius-sm); cursor:pointer; transition:all 0.3s;">
+              <span style="font-size:2rem; display:block; margin-bottom:8px;">📁</span>
+              <span id="excel-file-name" style="font-size:0.9rem; color:var(--text-secondary);">Haga clic o arrastre su archivo Excel consolidado aquí</span>
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+              <button class="btn-primary" id="btn-submit-excel-import" style="padding:10px 20px;" disabled>
+                🚀 Iniciar Importación de Excel
+              </button>
+            </div>
+          </div>
+        </div>
+    <!-- Footer Branding -->
+    <footer style="margin-top: 40px; padding: 20px 0; border-top: 1px solid var(--glass-border); text-align: center; font-size: 0.85rem; color: var(--text-secondary); display: flex; justify-content: center; align-items: center; gap: 8px;">
+      <span>Elaborado por</span>
+      <a href="https://expandete.cloud" target="_blank" style="color: var(--accent-color); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+        <span>expandete.cloud</span>
+        <span style="font-size: 0.9rem;">🚀</span>
+      </a>
+    </footer>
+  </div>
+
+  <!-- Detail Drawer Backdrop -->
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+
+  <!-- Detail Drawer -->
+  <div class="drawer drawer-wide" id="drawer">
+    <div class="drawer-header">
+      <div class="drawer-title-section">
+        <div class="drawer-title" id="drawer-title">Nombre</div>
+        <span id="drawer-type" class="supplier-type">Tipo</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-primary" id="btn-report-supplier" style="padding:8px 14px;font-size:0.82rem;background:var(--success-color);border:none;border-radius:4px;cursor:pointer;">🖨️ Reporte</button>
+        <button class="btn-secondary" id="btn-edit-supplier" style="padding:8px 14px;font-size:0.82rem;">✏️ Editar</button>
+        <button class="btn-danger" id="btn-delete-supplier" style="padding:8px 14px;font-size:0.82rem;">🗑️ Eliminar</button>
+        <button class="btn-close" id="btn-close-drawer">&times;</button>
+      </div>
+    </div>
+
+    <!-- Info Grid -->
+    <div class="metadata-grid" id="drawer-meta-grid" style="grid-template-columns:repeat(4,1fr); gap:12px; padding:16px;">
+      <div class="meta-item"><span class="meta-label">Código</span><span class="meta-val" id="drawer-codigo">—</span></div>
+      <div class="meta-item"><span class="meta-label">Categoría Dashboard</span><span class="meta-val" id="drawer-categoria">—</span></div>
+      <div class="meta-item"><span class="meta-label">Categoría Excel</span><span class="meta-val" id="drawer-excel-categoria">—</span></div>
+      <div class="meta-item"><span class="meta-label">Riesgo HACCP</span><span class="meta-val" id="drawer-haccp">—</span></div>
+      <div class="meta-item" style="grid-column:1/-1;"><span class="meta-label">Materia Prima / Insumo / Servicio</span><span class="meta-val" id="drawer-material" style="font-size:1.05rem;font-weight:700;">—</span></div>
+      <div class="meta-item"><span class="meta-label">Fabricante</span><span class="meta-val" id="drawer-provider">—</span></div>
+      <div class="meta-item"><span class="meta-label">Proveedor / Distribuidor</span><span class="meta-val" id="drawer-distributor">—</span></div>
+      <div class="meta-item" style="grid-column:span 2;"><span class="meta-label">Cliente</span><span class="meta-val" id="drawer-cliente">—</span></div>
+    </div>
+
+    <!-- Document Status Panel -->
+    <div class="doc-status-panel">
+      <h4 style="margin-bottom:12px;color:var(--text-primary);font-size:0.95rem;">📋 Estado Documental</h4>
+      <div class="doc-status-grid" id="drawer-doc-status">
+        <!-- Populated by app.js -->
+      </div>
+    </div>
+
+    <!-- Files -->
+    <div class="file-list-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid var(--border-color);padding-bottom:8px;">
+        <h4 style="border:none;margin:0;padding:0;">Archivos Físicos</h4>
+        <button class="btn-primary" id="btn-upload-doc" style="padding:6px 12px;font-size:0.8rem;">📤 Subir Documento</button>
+      </div>
+      <input type="text" id="drawer-file-search" class="input-search" placeholder="Buscar archivos..." style="width:100%;margin-bottom:10px;padding:8px 12px;font-size:0.82rem;">
+      <div class="file-list" id="drawer-file-list"></div>
+
+      <!-- Related -->
+      <div style="margin-top:20px;border-top:1px solid var(--border-color);padding-top:14px;">
+        <h4 style="font-size:0.9rem;margin-bottom:10px;border:none;padding:0;">Otros proveedores de esta materia prima</h4>
+        <div id="drawer-related-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATE / EDIT Supplier Modal -->
+  <div class="modal-backdrop" id="supplier-modal-backdrop">
+    <div class="modal" style="max-width:800px;">
+      <div class="modal-header">
+        <div class="modal-title" id="supplier-modal-title">Nuevo Registro</div>
+        <button class="btn-close" id="btn-close-supplier-modal">&times;</button>
+      </div>
+      <div class="modal-body" style="max-height:72vh;overflow-y:auto;padding:24px;color:var(--text-primary);">
+        <input type="hidden" id="supplier-old-name">
+        <input type="hidden" id="supplier-name">
+
+        <!-- SECCIÓN 1: Identificación -->
+        <div class="form-section-title" style="font-size:1.1rem;font-weight:600;margin-bottom:12px;color:var(--accent-color);border-bottom:1px solid var(--border-color);padding-bottom:6px;">📋 Datos Generales de la Materia Prima</div>
+        <div class="form-row-4" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:16px;margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label" for="supplier-codigo" style="display:block;margin-bottom:4px;font-size:0.85rem;">Código</label>
+            <input type="text" id="supplier-codigo" class="form-input" placeholder="Ej: MP-001" style="width:100%;">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="supplier-folder-type" style="display:block;margin-bottom:4px;font-size:0.85rem;">Categoría Dashboard <span style="color:var(--danger-color)">*</span></label>
+            <select id="supplier-folder-type" class="form-select" style="width:100%;"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="supplier-categoria" style="display:block;margin-bottom:4px;font-size:0.85rem;">Categoría Excel</label>
+            <input type="text" id="supplier-categoria" class="form-input" placeholder="Ej: Acidulantes" style="width:100%;">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="supplier-riesgo-haccp" style="display:block;margin-bottom:4px;font-size:0.85rem;">Riesgo HACCP</label>
+            <select id="supplier-riesgo-haccp" class="form-select" style="width:100%;">
+              <option value="">— Seleccionar —</option>
+              <option value="Alto">🔴 Alto</option>
+              <option value="Medio">🟡 Medio</option>
+              <option value="Bajo">🟢 Bajo</option>
+              <option value="NA">⚪ N/A</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label" for="supplier-material" style="display:block;margin-bottom:4px;font-size:0.85rem;">Nombre Materia Prima <span style="color:var(--danger-color)">*</span></label>
+          <input type="text" id="supplier-material" class="form-input" placeholder="Ej: ÁCIDO CÍTRICO ANHIDRO" style="width:100%;">
+        </div>
+
+        <!-- SECCIÓN 2: Fabricante, Proveedor y Cliente (Múltiples Opciones) -->
+        <div class="form-section-title" style="font-size:1.1rem;font-weight:600;margin-top:20px;margin-bottom:12px;color:var(--accent-color);border-bottom:1px solid var(--border-color);padding-bottom:6px;">🏢 Fabricantes, Proveedores y Clientes</div>
+        <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label" style="display:block;margin-bottom:4px;font-size:0.85rem;font-weight:600;">Fabricante(s)</label>
+            <div class="multi-select-box" id="provider-checkbox-list" style="max-height:110px; overflow-y:auto; border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:8px; background:rgba(0,0,0,0.25); display:flex; flex-direction:column; gap:4px;">
+              <!-- Populated dynamically -->
+            </div>
+            <div style="display:flex; gap:6px; margin-top:6px;">
+              <input type="text" id="new-provider-quick-add" class="form-input" style="flex:1; padding:4px 8px; font-size:0.78rem;" placeholder="Agregar fabricante...">
+              <button type="button" class="btn-secondary" id="btn-quick-add-provider" style="padding:4px 10px; font-size:0.75rem;">➕ Add</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="display:block;margin-bottom:4px;font-size:0.85rem;font-weight:600;">Proveedor / Distribuidor(es)</label>
+            <div class="multi-select-box" id="distributor-checkbox-list" style="max-height:110px; overflow-y:auto; border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:8px; background:rgba(0,0,0,0.25); display:flex; flex-direction:column; gap:4px;">
+              <!-- Populated dynamically -->
+            </div>
+            <div style="display:flex; gap:6px; margin-top:6px;">
+              <input type="text" id="new-distributor-quick-add" class="form-input" style="flex:1; padding:4px 8px; font-size:0.78rem;" placeholder="Agregar proveedor...">
+              <button type="button" class="btn-secondary" id="btn-quick-add-distributor" style="padding:4px 10px; font-size:0.75rem;">➕ Add</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label" style="display:block;margin-bottom:4px;font-size:0.85rem;font-weight:600;">Cliente(s) (si aplica)</label>
+          <div class="multi-select-box" id="cliente-checkbox-list" style="max-height:110px; overflow-y:auto; border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:8px; background:rgba(0,0,0,0.25); display:flex; flex-direction:column; gap:4px;">
+            <!-- Populated dynamically -->
+          </div>
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <input type="text" id="new-cliente-quick-add" class="form-input" style="flex:1; padding:4px 8px; font-size:0.78rem;" placeholder="Agregar cliente...">
+            <button type="button" class="btn-secondary" id="btn-quick-add-cliente" style="padding:4px 10px; font-size:0.75rem;">➕ Add</button>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 3: Documentación Técnica Detallada -->
+        <div class="form-section-title" style="font-size:1.1rem;font-weight:600;margin-top:20px;margin-bottom:12px;color:var(--accent-color);border-bottom:1px solid var(--border-color);padding-bottom:6px;">📄 Documentación Técnica (Estados y Archivos)</div>
+        <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:14px;">Ingrese el estado/año del documento que aparecerá en el reporte y cargue el archivo PDF si está disponible.</p>
+        
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <!-- FT Fabricante -->
+          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+            <div style="font-weight:600; font-size:0.85rem;">Ficha Técnica (FT) Fabricante</div>
+            <input type="text" id="doc-status-ft" class="form-input" placeholder="Ej: Si / No / Año" style="padding:6px 10px; font-size:0.85rem;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="file" id="file-upload-ft" style="display:none;" accept=".pdf">
+              <button type="button" onclick="document.getElementById('file-upload-ft').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
+              <span id="file-status-ft" style="font-size:0.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Sin archivo">❌ Sin doc</span>
+            </div>
+          </div>
+
+          <!-- FT Interna -->
+          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+            <div style="font-weight:600; font-size:0.85rem;">Ficha Técnica Interna</div>
+            <input type="text" id="doc-status-ft-interna" class="form-input" placeholder="Ej: Si / No / Año" style="padding:6px 10px; font-size:0.85rem;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="file" id="file-upload-ft-interna" style="display:none;" accept=".pdf">
+              <button type="button" onclick="document.getElementById('file-upload-ft-interna').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
+              <span id="file-status-ft-interna" style="font-size:0.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Sin archivo">❌ Sin doc</span>
+            </div>
+          </div>
+
+          <!-- Acta Sanitaria Año de Visita -->
+          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+            <div style="font-weight:600; font-size:0.85rem;">Acta Sanitaria (Año Visita)</div>
+            <input type="text" id="doc-status-acta" class="form-input" placeholder="Ej: 2025 / x / No aplica" style="padding:6px 10px; font-size:0.85rem;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="file" id="file-upload-acta" style="display:none;" accept=".pdf">
+              <button type="button" onclick="document.getElementById('file-upload-acta').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
+              <span id="file-status-acta" style="font-size:0.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Sin archivo">❌ Sin doc</span>
+            </div>
+          </div>
+
+          <!-- Certificación Proveedor (SGC) -->
+          <div style="display:grid; grid-template-columns:1.8fr 0.5fr 0.5fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+            <div style="font-weight:600; font-size:0.85rem;">Certificación SGC Proveedor</div>
+            <input type="text" id="doc-status-cert-tipo" class="form-input" placeholder="Ej: FSSC 22000" style="padding:6px 10px; font-size:0.85rem;">
+            <input type="text" id="doc-status-cert-vence" class="form-input" placeholder="Año: 2028" style="padding:6px 10px; font-size:0.85rem;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="file" id="file-upload-cert" style="display:none;" accept=".pdf">
+              <button type="button" onclick="document.getElementById('file-upload-cert').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
+              <span id="file-status-cert" style="font-size:0.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Sin archivo">❌ Sin doc</span>
+            </div>
+          </div>
+
+          <!-- Declaración de Alérgenos -->
+          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+            <div style="font-weight:600; font-size:0.85rem;">Decl. Alérgenos (Materia Prima)</div>
+            <input type="text" id="doc-status-alergenos" class="form-input" placeholder="Ej: En carta 2026 / No aplica" style="padding:6px 10px; font-size:0.85rem;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="file" id="file-upload-alergenos" style="display:none;" accept=".pdf">
+              <button type="button" onclick="document.getElementById('file-upload-alergenos').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
+              <span id="file-status-alergenos" style="font-size:0.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Sin archivo">❌ Sin doc</span>
+            </div>
+          </div>
+
+          <!-- Declaración Apto Alimentos -->
+          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+            <div style="font-weight:600; font-size:0.85rem;">Apto Alimentos (Envase/Tapa)</div>
+            <input type="text" id="doc-status-apto" class="form-input" placeholder="Ej: No aplica / Si / x" style="padding:6px 10px; font-size:0.85rem;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="file" id="file-upload-apto" style="display:none;" accept=".pdf">
+              <button type="button" onclick="document.getElementById('file-upload-apto').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
+              <span id="file-status-apto" style="font-size:0.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Sin archivo">❌ Sin doc</span>
+            </div>
+          </div>
+
+          <!-- Análisis FQ -->
+          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+            <div style="font-weight:600; font-size:0.85rem;">Análisis FQ (Metales/Pest.)</div>
+            <input type="text" id="doc-status-fq" class="form-input" placeholder="Ej: Metales pesados 2022 / x" style="padding:6px 10px; font-size:0.85rem;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="file" id="file-upload-fq" style="display:none;" accept=".pdf">
+              <button type="button" onclick="document.getElementById('file-upload-fq').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
+              <span id="file-status-fq" style="font-size:0.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Sin archivo">❌ Sin doc</span>
+            </div>
+          </div>
+
+          <!-- Cartas Firmadas: Fraude -->
+          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+            <div style="font-weight:600; font-size:0.85rem;">Carta Firmada: Fraude</div>
+            <input type="text" id="doc-status-fraude" class="form-input" placeholder="Ej: Si / No / x" style="padding:6px 10px; font-size:0.85rem;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="file" id="file-upload-fraude" style="display:none;" accept=".pdf">
+              <button type="button" onclick="document.getElementById('file-upload-fraude').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
+              <span id="file-status-fraude" style="font-size:0.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Sin archivo">❌ Sin doc</span>
+            </div>
+          </div>
+
+          <!-- Cartas Firmadas: Especificación -->
+          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+            <div style="font-weight:600; font-size:0.85rem;">Carta Firmada: Especificación</div>
+            <input type="text" id="doc-status-especificacion" class="form-input" placeholder="Ej: Si / No / x" style="padding:6px 10px; font-size:0.85rem;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="file" id="file-upload-especificacion" style="display:none;" accept=".pdf">
+              <button type="button" onclick="document.getElementById('file-upload-especificacion').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
+              <span id="file-status-especificacion" style="font-size:0.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Sin archivo">❌ Sin doc</span>
+            </div>
+          </div>
+
+          <!-- Cartas Firmadas: Otras -->
+          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+            <div style="font-weight:600; font-size:0.85rem;">Carta Firmada: Otras</div>
+            <input type="text" id="doc-status-otras" class="form-input" placeholder="Ej: vida util / Origen / GMO" style="padding:6px 10px; font-size:0.85rem;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="file" id="file-upload-otras" style="display:none;" accept=".pdf">
+              <button type="button" onclick="document.getElementById('file-upload-otras').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
+              <span id="file-status-otras" style="font-size:0.75rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="Sin archivo">❌ Sin doc</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" style="background:#4b5563;" id="btn-cancel-supplier-modal">Cancelar</button>
+        <button class="btn-primary" id="btn-save-supplier">💾 Guardar Registro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Doc Modal -->
+  <div class="modal-backdrop" id="upload-modal-backdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">📤 Subir Documento Técnico</div>
+        <button class="btn-close" id="btn-close-upload-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="upload-doc-type">Tipo de Documento</label>
+          <select id="upload-doc-type" class="form-select">
+            <option value="Ficha Técnica (FT)">Ficha Técnica (FT)</option>
+            <option value="Certificado de Análisis (COA)">Certificado de Análisis (COA)</option>
+            <option value="Hoja de Seguridad (MSDS)">Hoja de Seguridad (MSDS)</option>
+            <option value="Acta Sanitaria">Acta Sanitaria Interna</option>
+            <option value="Certificación Proveedor">Certificación del Proveedor</option>
+            <option value="Declaración de Alérgenos">Declaración de Alérgenos</option>
+            <option value="Declaración Apto Alimentos">Decl. Apto para Alimentos</option>
+            <option value="Análisis FQ">Análisis FQ</option>
+            <option value="Carta Fraude">Carta Fraude</option>
+            <option value="Carta Especificacion">Carta Especificación</option>
+            <option value="Otros Documentos">Otros Documentos</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Seleccionar Archivo</label>
+          <input type="file" id="upload-file-input" style="display:none;">
+          <div class="file-upload-zone" id="drop-zone">
+            <i>📤</i>
+            <span id="upload-file-name">Haga clic o arrastre un archivo aquí</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" style="background:#4b5563;" id="btn-cancel-upload-modal">Cancelar</button>
+        <button class="btn-primary" id="btn-submit-upload">Subir y Vincular</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast-notify">
+    <span id="toast-icon">ℹ️</span>
+    <span id="toast-message">Notificación</span>
+  </div>
+
+  <!-- Firebase SDK (compat mode - no bundler needed) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+
+  <!-- SheetJS for browser-side Excel reading/writing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Firebase Configuration & Initialization -->
+  <script src="firebase-config.js"></script>
+
+  <!-- App (Firebase version) -->
+  <script src="firebase-app.js?v=6"></script>
+</body>
+</html>

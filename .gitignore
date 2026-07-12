@@ -1,0 +1,7 @@
+data.json
+data.js
+*.log
+.tempmediaStorage/
+node_modules/
+scripts/serviceAccountKey.json
+serviceAccountKey.json
