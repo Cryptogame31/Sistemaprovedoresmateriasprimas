@@ -15,6 +15,8 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db      = firebase.firestore();
 const storage = firebase.storage();
+storage.setMaxUploadRetryTime(3000);
+storage.setMaxOperationRetryTime(3000);
 
 // Configurar persistencia offline (opcional pero mejora UX)
 db.enablePersistence({ synchronizeTabs: true }).catch(err => {
