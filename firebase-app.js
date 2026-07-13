@@ -404,19 +404,59 @@ function renderTable(suppliers) {
         <th colspan="3">Cartas Firmadas<br><small style="font-size:10px;">Fraude | Spec | Otras</small></th>
       </tr></thead><tbody>`;
 
+  function getStatusBadge(statusVal, fallbackVal = null) {
+    const val = (statusVal || fallbackVal || '').trim();
+    if (!val) return '<span class="badge badge-danger">✗</span>';
+    const valClean = val.toLowerCase();
+    if (valClean.startsWith('http://') || valClean.startsWith('https://')) {
+      return `<a href="${val}" target="_blank" class="badge badge-success" style="text-decoration:none;" title="Abrir Enlace">🔗 Link</a>`;
+    }
+    if (valClean === 'si' || valClean === 'completo') {
+      return '<span class="badge badge-success">✓ Si</span>';
+    }
+    if (valClean === 'no' || valClean === 'x') {
+      return '<span class="badge badge-danger">✗ No</span>';
+    }
+    if (valClean === 'na' || valClean === 'n/a' || valClean.includes('aplica')) {
+      return '<span class="badge badge-neutral">N/A</span>';
+    }
+    const isCompleted = valClean === 'en carta' || /^\d{4}$/.test(valClean) || valClean.includes('vence') || valClean.includes('carta');
+    if (isCompleted) {
+      return `<span class="badge badge-success">${val}</span>`;
+    }
+    return `<span class="badge badge-warning">${val}</span>`;
+  }
+
+  function getCartaEmoji(val, fallbackVal) {
+    const status = (val || fallbackVal || '').trim().toLowerCase();
+    if (!status || status === 'no' || status === 'x') return '🔴';
+    if (status.startsWith('http://') || status.startsWith('https://')) {
+      return `<a href="${val || fallbackVal}" target="_blank" style="text-decoration:none;" title="Abrir Enlace">🔗</a>`;
+    }
+    if (status === 'na' || status === 'n/a' || status.includes('aplica')) return '⚪';
+    return '🟢';
+  }
+
   suppliers.forEach(s => {
-    const ftFabBadge = s.ft_year ? `<span class="badge badge-success">${s.ft_year}</span>` : '<span class="badge badge-danger">✗</span>';
-    const ftIntBadge = s.ft_dist_year ? `<span class="badge badge-info">${s.ft_dist_year}</span>` : '<span class="badge badge-danger">✗</span>';
+    const ftFabBadge = getStatusBadge(s.doc_status_ft, s.ft_year);
+    const ftIntBadge = getStatusBadge(s.doc_status_ft_interna, s.ft_dist_year);
     const haccpClass = s.riesgo_haccp === 'Alto' ? 'badge-danger' : s.riesgo_haccp === 'Medio' ? 'badge-warning' : s.riesgo_haccp === 'Bajo' ? 'badge-success' : 'badge-neutral';
-    let certBadge = '<span class="badge badge-danger">✗</span>';
+    
+    const certBadge = getStatusBadge(s.doc_status_cert_tipo, s.certificacion);
+    
     let vencimientoHtml = '—';
-    if (s.certificacion) {
-      certBadge = '<span class="badge badge-success">✓</span>';
-      if (s.cert_fecha) {
-        const d = Math.ceil((new Date(s.cert_fecha) - new Date()) / 86400000);
-        vencimientoHtml = `<span class="badge ${d < 0 ? 'badge-danger' : d <= 90 ? 'badge-warning' : 'badge-success'}">${s.cert_fecha}</span>`;
+    const vencVal = (s.doc_status_cert_vence || s.cert_fecha || '').trim();
+    if (vencVal) {
+      if (/^\d{4}$/.test(vencVal)) {
+        vencimientoHtml = `<span class="badge badge-success">${vencVal}</span>`;
+      } else if (!isNaN(Date.parse(vencVal))) {
+        const d = Math.ceil((new Date(vencVal) - new Date()) / 86400000);
+        vencimientoHtml = `<span class="badge ${d < 0 ? 'badge-danger' : d <= 90 ? 'badge-warning' : 'badge-success'}">${vencVal}</span>`;
+      } else {
+        vencimientoHtml = `<span class="badge badge-neutral">${vencVal}</span>`;
       }
     }
+
     tableHtml += `
       <tr class="table-row-interactive" data-name="${s.folder_name}">
         <td style="font-weight:600;color:var(--accent-color);">${s.codigo || '—'}</td>
@@ -426,16 +466,16 @@ function renderTable(suppliers) {
         <td class="text-secondary">${s.distributor || '—'}</td>
         <td class="text-center">${ftFabBadge}</td>
         <td class="text-center">${ftIntBadge}</td>
-        <td class="text-center">${s.acta_sanitaria ? '<span class="badge badge-success">✓</span>' : '<span class="badge badge-danger">✗</span>'}</td>
+        <td class="text-center">${getStatusBadge(s.doc_status_acta, s.acta_sanitaria)}</td>
         <td class="text-center"><span class="badge ${haccpClass}">${s.riesgo_haccp || 'N/A'}</span></td>
         <td class="text-center">${certBadge}</td>
         <td class="text-center">${vencimientoHtml}</td>
-        <td class="text-center">${s.decl_alergenos ? '<span class="badge badge-success">✓</span>' : '<span class="badge badge-danger">✗</span>'}</td>
-        <td class="text-center">${s.decl_apto ? '<span class="badge badge-success">✓</span>' : '<span class="badge badge-neutral">N/A</span>'}</td>
-        <td class="text-center">${s.analisis_fq ? '<span class="badge badge-success">✓</span>' : '<span class="badge badge-danger">✗</span>'}</td>
-        <td class="text-center" style="border-right:none;padding-right:4px;">${s.carta_fraude ? '🟢' : '🔴'}</td>
-        <td class="text-center" style="border-left:none;border-right:none;padding:4px;">${s.carta_especificacion ? '🟢' : '🔴'}</td>
-        <td class="text-center" style="border-left:none;padding-left:4px;">${s.cartas_otras ? '🟢' : '🔴'}</td>
+        <td class="text-center">${getStatusBadge(s.doc_status_alergenos, s.decl_alergenos)}</td>
+        <td class="text-center">${getStatusBadge(s.doc_status_apto, s.decl_apto)}</td>
+        <td class="text-center">${getStatusBadge(s.doc_status_fq, s.analisis_fq)}</td>
+        <td class="text-center" style="border-right:none;padding-right:4px;">${getCartaEmoji(s.doc_status_fraude, s.carta_fraude)}</td>
+        <td class="text-center" style="border-left:none;border-right:none;padding:4px;">${getCartaEmoji(s.doc_status_especificacion, s.carta_especificacion)}</td>
+        <td class="text-center" style="border-left:none;padding-left:4px;">${getCartaEmoji(s.doc_status_otras, s.cartas_otras)}</td>
       </tr>`;
   });
   tableHtml += '</tbody></table>';
@@ -571,20 +611,25 @@ function renderDrawerDocStatus() {
   items.forEach(item => {
     const valText = item.status || 'No';
     const valClean = valText.toLowerCase().trim();
-    const isCompleted = valClean === 'si' || valClean === 'en carta' || /^\d{4}$/.test(valClean) || valClean.includes('vence') || valClean.includes('completo') || valClean.includes('aplica') || valClean.includes('carta');
-    const isPending = !item.status || valClean === 'no' || valClean === 'x' || valClean === '';
+    const isUrl = valClean.startsWith('http://') || valClean.startsWith('https://');
+    const isCompleted = isUrl || valClean === 'si' || valClean === 'en carta' || /^\d{4}$/.test(valClean) || valClean.includes('vence') || valClean.includes('completo') || valClean.includes('aplica') || valClean.includes('carta');
+    const isPending = !isUrl && (!item.status || valClean === 'no' || valClean === 'x' || valClean === '');
     const cardClass = isCompleted ? 'active' : isPending ? '' : 'warning';
     const icon = isCompleted ? '✓' : '✗';
     
     // Find file associated with this category
     const file = s.files?.find(f => f.category === item.category);
     let fileLinkHtml = '';
-    if (file) {
+    if (isUrl) {
+      fileLinkHtml = `<br><a href="${valText}" target="_blank" style="margin-top:6px; display:inline-block; font-size:0.75rem; color:var(--accent-color); text-decoration:none; font-weight:600; background:rgba(6,182,212,0.1); padding:3px 8px; border-radius:4px;">🔗 Abrir Enlace (Drive/Otro)</a>`;
+    } else if (file) {
       const url = file.firebase_url || (window.location.hostname === 'localhost' && file.relative_path ? `/api/file/view?path=${encodeURIComponent(file.relative_path)}` : null);
       if (url) {
         fileLinkHtml = `<br><a href="${url}" target="_blank" style="margin-top:6px; display:inline-block; font-size:0.75rem; color:var(--accent-color); text-decoration:none; font-weight:600; background:rgba(6,182,212,0.1); padding:3px 8px; border-radius:4px;">📄 Abrir Documento</a>`;
       }
     }
+    
+    const displayVal = isUrl ? 'Enlace Adjunto' : valText;
     
     html += `
       <div class="doc-status-card ${cardClass}" style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:12px; height:auto; min-height:85px; border-left:4px solid ${isCompleted ? 'var(--success-color)' : isPending ? 'var(--danger-color)' : 'var(--warning-color)'};">
@@ -593,7 +638,7 @@ function renderDrawerDocStatus() {
           <div style="font-weight:600; font-size:0.82rem; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.label}">${item.label}</div>
         </div>
         <div style="font-size:0.78rem; color:var(--text-secondary); margin-left:26px; line-height:1.2; width:calc(100% - 26px); word-break:break-word;">
-          Estado: <strong>${valText}</strong>
+          Estado: <strong>${displayVal}</strong>
           ${fileLinkHtml}
         </div>
       </div>`;
