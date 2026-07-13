@@ -175,13 +175,37 @@ const excelFileName = document.getElementById('excel-file-name');
 const btnSubmitExcelImport = document.getElementById('btn-submit-excel-import');
 const btnReportSupplier = document.getElementById('btn-report-supplier');
 
+const loginScreen = document.getElementById('login-screen');
+const mainAppContainer = document.getElementById('main-app-container');
+const loginForm = document.getElementById('login-form');
+const loginEmailInput = document.getElementById('login-email');
+const loginPasswordInput = document.getElementById('login-password');
+const loginErrorMsg = document.getElementById('login-error-msg');
+const btnLoginSubmit = document.getElementById('btn-login-submit');
+const btnLogout = document.getElementById('btn-logout');
+
 let providerInputMode    = 'select';
 let distributorInputMode = 'select';
 
+let currentUser = null;
+
 // ── INIT ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  fetchData();
   setupEventListeners();
+  
+  // Listen to Firebase Auth state changes
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      if (loginScreen) loginScreen.style.display = 'none';
+      if (mainAppContainer) mainAppContainer.style.display = 'block';
+      fetchData();
+    } else {
+      currentUser = null;
+      if (loginScreen) loginScreen.style.display = 'flex';
+      if (mainAppContainer) mainAppContainer.style.display = 'none';
+    }
+  });
 });
 
 // ── TOAST ─────────────────────────────────────────────────────
@@ -1823,6 +1847,51 @@ function setupEventListeners() {
       });
     }
   });
+
+  // Autenticación (Login & Logout)
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = loginEmailInput.value.trim();
+      const password = loginPasswordInput.value;
+      
+      btnLoginSubmit.disabled = true;
+      const originalText = btnLoginSubmit.innerHTML;
+      btnLoginSubmit.innerHTML = '<span>⏳ Iniciando sesión...</span>';
+      if (loginErrorMsg) loginErrorMsg.style.display = 'none';
+
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
+      } catch (err) {
+        console.error(err);
+        let errorMsg = 'Error al iniciar sesión. Verifique sus credenciales.';
+        if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+          errorMsg = 'Usuario o contraseña incorrectos.';
+        } else if (err.code === 'auth/invalid-email') {
+          errorMsg = 'El formato del correo es inválido.';
+        }
+        if (loginErrorMsg) {
+          loginErrorMsg.textContent = errorMsg;
+          loginErrorMsg.style.display = 'block';
+        }
+      } finally {
+        btnLoginSubmit.disabled = false;
+        btnLoginSubmit.innerHTML = originalText;
+      }
+    });
+  }
+
+  if (btnLogout) {
+    btnLogout.addEventListener('click', async () => {
+      try {
+        await firebase.auth().signOut();
+        showToast('Sesión cerrada con éxito');
+      } catch (err) {
+        console.error(err);
+        showToast('Error al cerrar sesión', 'danger');
+      }
+    });
+  }
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeDrawer(); closeSupplierModal(); closeUploadModal(); }
