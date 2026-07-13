@@ -1623,6 +1623,15 @@ function handleExportExcel() {
     return showToast('No hay datos disponibles para exportar.', 'danger');
   }
   
+  function getExcelStatusWithLink(status, link) {
+    const statusStr = (status || '').trim();
+    const linkStr = (link || '').trim();
+    if (linkStr) {
+      return statusStr ? `${statusStr} (${linkStr})` : linkStr;
+    }
+    return statusStr;
+  }
+  
   const row1 = [
     "CÓDIGO",
     "NOMBRE MATERIA PRIMA",
@@ -1668,18 +1677,18 @@ function handleExportExcel() {
     s.provider || '',
     s.distributor || '',
     s.cliente || '',
-    s.doc_status_ft || '',
-    s.doc_status_ft_interna || '',
-    s.doc_status_acta || '',
+    getExcelStatusWithLink(s.doc_status_ft, s.doc_link_ft),
+    getExcelStatusWithLink(s.doc_status_ft_interna, s.doc_link_ft_interna),
+    getExcelStatusWithLink(s.doc_status_acta, s.doc_link_acta),
     s.riesgo_haccp || '',
-    s.doc_status_cert_tipo || '',
+    getExcelStatusWithLink(s.doc_status_cert_tipo, s.doc_link_cert),
     s.doc_status_cert_vence || '',
-    s.doc_status_alergenos || '',
-    s.doc_status_apto || '',
-    s.doc_status_fq || '',
-    s.doc_status_fraude || '',
-    s.doc_status_especificacion || '',
-    s.doc_status_otras || ''
+    getExcelStatusWithLink(s.doc_status_alergenos, s.doc_link_alergenos),
+    getExcelStatusWithLink(s.doc_status_apto, s.doc_link_apto),
+    getExcelStatusWithLink(s.doc_status_fq, s.doc_link_fq),
+    getExcelStatusWithLink(s.doc_status_fraude, s.doc_link_fraude),
+    getExcelStatusWithLink(s.doc_status_especificacion, s.doc_link_especificacion),
+    getExcelStatusWithLink(s.doc_status_otras, s.doc_link_otras)
   ]);
   
   const allRows = [row1, row2, ...dataRows];
@@ -1738,29 +1747,56 @@ function handleReportSupplier() {
   const printWindow = window.open('', '_blank');
   
   const docsHtml = [
-    { label: 'Ficha Técnica (FT) Fabricante', status: s.doc_status_ft, category: 'Ficha Técnica (FT)' },
-    { label: 'Ficha Técnica Interna', status: s.doc_status_ft_interna, category: 'Ficha Técnica Interna' },
-    { label: 'Acta Sanitaria (Año Visita)', status: s.doc_status_acta, category: 'Acta Sanitaria' },
-    { label: 'Certificación SGC Proveedor', status: (s.doc_status_cert_tipo ? `${s.doc_status_cert_tipo} ${s.doc_status_cert_vence ? '(Vence: ' + s.doc_status_cert_vence + ')' : ''}` : 'No'), category: 'Certificación Proveedor' },
-    { label: 'Declaración Alérgenos (Materia Prima)', status: s.doc_status_alergenos, category: 'Declaración de Alérgenos' },
-    { label: 'Apto Alimentos (Envase/Tapa)', status: s.doc_status_apto, category: 'Declaración Apto Alimentos' },
-    { label: 'Análisis FQ (Metales/Pest.)', status: s.doc_status_fq, category: 'Análisis FQ' },
-    { label: 'Carta Firmada: Fraude', status: s.doc_status_fraude, category: 'Carta Fraude' },
-    { label: 'Carta Firmada: Especificación', status: s.doc_status_especificacion, category: 'Carta Especificacion' },
-    { label: 'Carta Firmada: Otras', status: s.doc_status_otras, category: 'Otros Documentos' }
+    { label: 'Ficha Técnica (FT) Fabricante', status: s.doc_status_ft, link: s.doc_link_ft, category: 'Ficha Técnica (FT)' },
+    { label: 'Ficha Técnica Interna', status: s.doc_status_ft_interna, link: s.doc_link_ft_interna, category: 'Ficha Técnica Interna' },
+    { label: 'Acta Sanitaria (Año Visita)', status: s.doc_status_acta, link: s.doc_link_acta, category: 'Acta Sanitaria' },
+    { label: 'Certificación SGC Proveedor', status: (s.doc_status_cert_tipo ? `${s.doc_status_cert_tipo} ${s.doc_status_cert_vence ? '(Vence: ' + s.doc_status_cert_vence + ')' : ''}` : 'No'), link: s.doc_link_cert, category: 'Certificación Proveedor' },
+    { label: 'Declaración Alérgenos (Materia Prima)', status: s.doc_status_alergenos, link: s.doc_link_alergenos, category: 'Declaración de Alérgenos' },
+    { label: 'Apto Alimentos (Envase/Tapa)', status: s.doc_status_apto, link: s.doc_link_apto, category: 'Declaración Apto Alimentos' },
+    { label: 'Análisis FQ (Metales/Pest.)', status: s.doc_status_fq, link: s.doc_link_fq, category: 'Análisis FQ' },
+    { label: 'Carta Firmada: Fraude', status: s.doc_status_fraude, link: s.doc_link_fraude, category: 'Carta Fraude' },
+    { label: 'Carta Firmada: Especificación', status: s.doc_status_especificacion, link: s.doc_link_especificacion, category: 'Carta Especificacion' },
+    { label: 'Carta Firmada: Otras', status: s.doc_status_otras, link: s.doc_link_otras, category: 'Otros Documentos' }
   ].map(doc => {
     const valClean = (doc.status || '').toLowerCase().trim();
-    const isCompleted = valClean === 'si' || valClean === 'en carta' || /^\d{4}$/.test(valClean) || valClean.includes('vence') || valClean.includes('completo') || valClean.includes('aplica') || valClean.includes('carta');
-    const isPending = !doc.status || valClean === 'no' || valClean === 'x' || valClean === '';
+    
+    let valUrl = (doc.link || '').trim();
+    if (!valUrl) {
+      const urlMatch = (doc.status || '').match(/(https?:\/\/[^\s]+)/i);
+      if (urlMatch) valUrl = urlMatch[1];
+    }
+    const isUrl = !!valUrl;
+    
+    let displayVal = doc.status || 'No';
+    if (isUrl && !doc.link) {
+      displayVal = (doc.status || '').replace(valUrl, '').replace(/\|/g, '').trim();
+    }
+    if (!displayVal || (displayVal.toLowerCase() === 'no' && isUrl)) displayVal = 'Enlace Adjunto';
+
+    const isCompleted = isUrl || valClean === 'si' || valClean === 'en carta' || /^\d{4}$/.test(valClean) || valClean.includes('vence') || valClean.includes('completo') || valClean.includes('aplica') || valClean.includes('carta');
+    const isPending = !isUrl && (!doc.status || valClean === 'no' || valClean === 'x' || valClean === '');
     const statusText = isCompleted ? '🟢 CUMPLE' : isPending ? '🔴 PENDIENTE' : '🟡 PARCIAL';
     
     const file = s.files?.find(f => f.category === doc.category);
-    const fileStatus = file ? `Adjunto: ${file.name}` : 'Sin archivo físico';
+    let fileStatus = '';
+    
+    if (isUrl) {
+      fileStatus = `<a href="${valUrl}" target="_blank" style="color:#0056b3; font-weight:600; text-decoration:none;">🔗 Ver Enlace (Drive/Otro)</a>`;
+    }
+    if (file) {
+      const fileLink = file.firebase_url || '';
+      const fileText = `📄 PDF: ${file.name}`;
+      const linkHtml = fileLink ? `<a href="${fileLink}" target="_blank" style="color:#0056b3; font-weight:600; text-decoration:none;">${fileText}</a>` : fileText;
+      fileStatus = fileStatus ? `${fileStatus} | ${linkHtml}` : linkHtml;
+    }
+    if (!fileStatus) {
+      fileStatus = 'Sin archivo físico ni enlace';
+    }
     
     return `
       <tr>
         <td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: 500;">${doc.label}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${doc.status || 'No'}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${displayVal}</td>
         <td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: bold; color: ${isCompleted ? '#10b981' : isPending ? '#ef4444' : '#f59e0b'};">${statusText}</td>
         <td style="padding: 10px; border-bottom: 1px solid #ddd; font-size: 0.85rem; color: #555;">${fileStatus}</td>
       </tr>`;
