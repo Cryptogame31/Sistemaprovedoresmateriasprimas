@@ -416,6 +416,14 @@
       </div>
     </div>
 
+    <!-- Lotes Certificados Panel -->
+    <div class="doc-status-panel" id="drawer-lotes-panel" style="margin-top:20px; border-top:1px solid var(--border-color); padding-top:14px;">
+      <h4 style="margin-bottom:12px;color:var(--text-primary);font-size:0.95rem;display:flex;align-items:center;gap:6px;">📦 Certificados de Calidad por Lote</h4>
+      <div id="drawer-lotes-list" style="display:flex; flex-direction:column; gap:6px;">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
     <!-- Files -->
     <div class="file-list-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid var(--border-color);padding-bottom:8px;">
@@ -636,6 +644,31 @@
             </div>
           </div>
         </div>
+
+        <!-- Certificados por Lote Section -->
+        <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--glass-border);">
+          <h4 style="font-size:0.95rem; color:var(--text-primary); margin-bottom:12px; display:flex; align-items:center; gap:6px;">📦 Certificados de Calidad por Lote</h4>
+          
+          <!-- List of existing batch certs -->
+          <div id="modal-lotes-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px; max-height:180px; overflow-y:auto; padding-right:4px;">
+            <!-- Populated dynamically via JS -->
+          </div>
+          
+          <!-- Add new batch cert form fields -->
+          <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--glass-border); display:grid; grid-template-columns:1.5fr 2fr 1fr; gap:10px; align-items:flex-end;">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label" style="font-size:0.75rem; margin-bottom:4px;">Número de Lote / Batch</label>
+              <input type="text" id="modal-lote-number" class="form-input" placeholder="Ej: LOTE-12345" style="padding:6px 10px; font-size:0.85rem;">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label class="form-label" style="font-size:0.75rem; margin-bottom:4px;">Enlace Google Drive (Certificado)</label>
+              <input type="text" id="modal-lote-link" class="form-input" placeholder="Ej: https://drive.google.com/..." style="padding:6px 10px; font-size:0.85rem;">
+            </div>
+            <input type="hidden" id="modal-lote-edit-index" value="">
+            <button type="button" id="btn-modal-add-lote" class="btn-primary" style="padding:8px 10px; font-size:0.8rem; height:36px; white-space:nowrap;">➕ Guardar Lote</button>
+          </div>
+        </div>
+      </div>
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" style="background:#4b5563;" id="btn-cancel-supplier-modal">Cancelar</button>
@@ -703,6 +736,6 @@
   <script src="firebase-config.js"></script>
 
   <!-- App (Firebase version) -->
-  <script src="firebase-app.js?v=13"></script>
+  <script src="firebase-app.js?v=14"></script>
 </body>
 </html>

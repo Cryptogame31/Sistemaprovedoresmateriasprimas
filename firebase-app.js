@@ -11,6 +11,7 @@ let uploadFileBytes  = null;
 let uploadFileName   = '';
 let uploadFileObject = null; // File real para Firebase Storage
 let activeWorkspaceTab = 'planilla';
+let currentModalLotes = [];
 
 const CHECKLIST_FIELDS = [
   { id: 'acta_sanitaria',       label: 'Acta Sanitaria',          short: 'ACTA'  },
@@ -636,6 +637,29 @@ function openDrawer(supplier) {
       drawerType.className        = `supplier-type ${getTypeClass(supplier.folder_type)}`;
     }
     if (drawerFileSearch) drawerFileSearch.value = '';
+    
+    const drawerLotesList = document.getElementById('drawer-lotes-list');
+    if (drawerLotesList) {
+      drawerLotesList.innerHTML = '';
+      const lotes = supplier.lotes_certificados || [];
+      if (!lotes.length) {
+        drawerLotesList.innerHTML = '<div style="font-size:0.85rem; color:var(--text-secondary);">Sin certificados por lote registrados.</div>';
+      } else {
+        lotes.forEach(l => {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-color);';
+          row.innerHTML = `
+            <div style="font-size:0.88rem; color:var(--text-primary);">
+              📦 Lote: <strong>${l.lote}</strong>
+            </div>
+            <a href="${l.link}" target="_blank" class="btn-primary" style="padding:4px 10px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+              🔗 Abrir Certificado
+            </a>`;
+          drawerLotesList.appendChild(row);
+        });
+      }
+    }
+
     renderDrawerDocStatus();
     renderFileList();
     renderRelatedSuppliers();
@@ -897,6 +921,84 @@ async function handleQuickAddEntity(inputId, containerId, roleName) {
   showToast(`✅ "${name}" registrado y agregado.`);
 }
 
+function renderModalLotes() {
+  const modalLotesList = document.getElementById('modal-lotes-list');
+  if (!modalLotesList) return;
+  modalLotesList.innerHTML = '';
+  
+  if (!currentModalLotes || !currentModalLotes.length) {
+    modalLotesList.innerHTML = '<div style="font-size:0.8rem; color:var(--text-secondary); text-align:center; padding:10px;">No hay certificados por lote agregados.</div>';
+    return;
+  }
+  
+  currentModalLotes.forEach((item, index) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:6px 10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border); margin-bottom: 4px;';
+    row.innerHTML = `
+      <div style="font-size:0.82rem; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; flex:1; padding-right:10px;">
+        📦 Lote: <strong>${item.lote}</strong> - <a href="${item.link}" target="_blank" style="color:var(--accent-color); text-decoration:none;">Ver Enlace 🔗</a>
+      </div>
+      <div style="display:flex; gap:6px; flex-shrink:0;">
+        <button type="button" class="btn-secondary" onclick="editModalLote(${index})" style="padding:4px 8px; font-size:0.75rem;">✏️</button>
+        <button type="button" class="btn-danger" onclick="deleteModalLote(${index})" style="padding:4px 8px; font-size:0.75rem; background:var(--danger-color); border:none; border-radius:4px; color:white; cursor:pointer;">🗑️</button>
+      </div>`;
+    modalLotesList.appendChild(row);
+  });
+}
+
+function editModalLote(index) {
+  const item = currentModalLotes[index];
+  if (!item) return;
+  document.getElementById('modal-lote-number').value = item.lote;
+  document.getElementById('modal-lote-link').value = item.link;
+  document.getElementById('modal-lote-edit-index').value = index.toString();
+  document.getElementById('btn-modal-add-lote').textContent = '💾 Actualizar';
+}
+
+function deleteModalLote(index) {
+  if (!confirm('¿Eliminar este lote?')) return;
+  currentModalLotes.splice(index, 1);
+  renderModalLotes();
+}
+
+window.editModalLote = editModalLote;
+window.deleteModalLote = deleteModalLote;
+
+function handleAddModalLote() {
+  const loteInput = document.getElementById('modal-lote-number');
+  const linkInput = document.getElementById('modal-lote-link');
+  const editIndexInput = document.getElementById('modal-lote-edit-index');
+  
+  if (!loteInput || !linkInput) return;
+  
+  const lote = loteInput.value.trim();
+  const link = linkInput.value.trim();
+  
+  if (!lote || !link) {
+    return showToast('Por favor escribe el número de lote y pega el enlace del certificado.', 'danger');
+  }
+  
+  const editIdxStr = editIndexInput ? editIndexInput.value : '';
+  
+  if (editIdxStr !== '') {
+    const idx = parseInt(editIdxStr);
+    currentModalLotes[idx] = { lote, link };
+  } else {
+    const isDuplicate = currentModalLotes.some(item => item.lote.toLowerCase() === lote.toLowerCase());
+    if (isDuplicate) {
+      return showToast('Ya agregaste un certificado para este lote.', 'danger');
+    }
+    currentModalLotes.push({ lote, link });
+  }
+  
+  loteInput.value = '';
+  linkInput.value = '';
+  if (editIndexInput) editIndexInput.value = '';
+  
+  document.getElementById('btn-modal-add-lote').textContent = '➕ Guardar Lote';
+  renderModalLotes();
+}
+
 function openSupplierModal(supplier = null) {
   populateFolderTypeDropdowns();
   populateCatalogsDropdowns();
@@ -931,6 +1033,15 @@ function openSupplierModal(supplier = null) {
     }
   });
 
+  const loteNumberInput = document.getElementById('modal-lote-number');
+  const loteLinkInput = document.getElementById('modal-lote-link');
+  const loteEditIndex = document.getElementById('modal-lote-edit-index');
+  const btnModalAddLote = document.getElementById('btn-modal-add-lote');
+  if (loteNumberInput) loteNumberInput.value = '';
+  if (loteLinkInput) loteLinkInput.value = '';
+  if (loteEditIndex) loteEditIndex.value = '';
+  if (btnModalAddLote) btnModalAddLote.textContent = '➕ Guardar Lote';
+
   const currentProvider = supplier ? (supplier.provider || '') : '';
   const currentDistributor = supplier ? (supplier.distributor || '') : '';
   const currentCliente = supplier ? (supplier.cliente || '') : '';
@@ -950,6 +1061,9 @@ function openSupplierModal(supplier = null) {
     supplierHaccpSelect.value    = supplier.riesgo_haccp || '';
     if (supplierCategoria) supplierCategoria.value = supplier.categoria || '';
     
+    currentModalLotes = supplier.lotes_certificados || [];
+    renderModalLotes();
+
     // Set document values & visual state
     Object.keys(DOC_FIELDS).forEach(key => {
       const conf = DOC_FIELDS[key];
@@ -986,6 +1100,8 @@ function openSupplierModal(supplier = null) {
     if (supplierMaterialInput) supplierMaterialInput.value = '';
     if (supplierCodigoInput)   supplierCodigoInput.value   = '';
     if (supplierHaccpSelect)   supplierHaccpSelect.value   = '';
+    currentModalLotes = [];
+    renderModalLotes();
   }
   supplierModalBackdrop.classList.add('active');
 }
@@ -1054,7 +1170,8 @@ async function handleSaveSupplier() {
       cliente:      selectedClientes || 'N/A',
       riesgo_haccp: supplierHaccpSelect.value,
       files:        files,
-      files_count:  files.length
+      files_count:  files.length,
+      lotes_certificados: currentModalLotes
     };
 
     Object.keys(DOC_FIELDS).forEach(key => {
@@ -2005,6 +2122,9 @@ function setupEventListeners() {
   if (btnSaveSupplier) btnSaveSupplier.addEventListener('click', handleSaveSupplier);
   if (btnCloseSupplierModal) btnCloseSupplierModal.addEventListener('click', closeSupplierModal);
   if (btnCancelSupplierModal) btnCancelSupplierModal.addEventListener('click', closeSupplierModal);
+  
+  const btnModalAddLote = document.getElementById('btn-modal-add-lote');
+  if (btnModalAddLote) btnModalAddLote.addEventListener('click', handleAddModalLote);
 
   if (btnSyncExcel) btnSyncExcel.addEventListener('click', handleSyncExcel);
 
