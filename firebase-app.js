@@ -508,9 +508,13 @@ function openDrawer(supplier) {
     renderDrawerDocStatus();
     renderFileList();
     renderRelatedSuppliers();
-    if (drawerBackdrop) drawerBackdrop.classList.add('active');
-    if (drawer) drawer.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    
+    // Defer visual transition to avoid layout thrashing and paint lag
+    setTimeout(() => {
+      if (drawerBackdrop) drawerBackdrop.classList.add('active');
+      if (drawer) drawer.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }, 50);
   } catch(e) {
     console.error('openDrawer error:', e);
   }
