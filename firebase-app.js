@@ -618,6 +618,44 @@ function formatEntityListWithLinks(namesStr, roleName) {
   }).join('');
 }
 
+function renderDrawerLotes(query = '') {
+  const drawerLotesList = document.getElementById('drawer-lotes-list');
+  if (!drawerLotesList || !selectedSupplier) return;
+  drawerLotesList.innerHTML = '';
+  
+  let lotes = selectedSupplier.lotes_certificados || [];
+  
+  // Sort descending by date (fecha) by default
+  lotes = [...lotes].sort((a, b) => {
+    const fA = a.fecha || '';
+    const fB = b.fecha || '';
+    return fB.localeCompare(fA);
+  });
+  
+  if (query.trim()) {
+    const q = query.toLowerCase().trim();
+    lotes = lotes.filter(l => (l.lote || '').toLowerCase().includes(q) || (l.fecha || '').toLowerCase().includes(q));
+  }
+  
+  if (!lotes.length) {
+    drawerLotesList.innerHTML = `<div style="font-size:0.85rem; color:var(--text-secondary); text-align:center; padding:10px;">${query.trim() ? 'No se encontraron lotes para la búsqueda.' : 'Sin certificados por lote registrados.'}</div>`;
+  } else {
+    lotes.forEach(l => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-color);';
+      const dateStr = l.fecha ? `<span style="font-size:0.75rem; color:var(--text-secondary); margin-left:6px;">(${l.fecha})</span>` : '';
+      row.innerHTML = `
+        <div style="font-size:0.88rem; color:var(--text-primary);">
+          📦 Lote: <strong>${l.lote}</strong> ${dateStr}
+        </div>
+        <a href="${l.link}" target="_blank" class="btn-primary" style="padding:4px 10px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+          🔗 Abrir Certificado
+        </a>`;
+      drawerLotesList.appendChild(row);
+    });
+  }
+}
+
 function openDrawer(supplier) {
   try {
     selectedSupplier = supplier;
@@ -638,27 +676,9 @@ function openDrawer(supplier) {
     }
     if (drawerFileSearch) drawerFileSearch.value = '';
     
-    const drawerLotesList = document.getElementById('drawer-lotes-list');
-    if (drawerLotesList) {
-      drawerLotesList.innerHTML = '';
-      const lotes = supplier.lotes_certificados || [];
-      if (!lotes.length) {
-        drawerLotesList.innerHTML = '<div style="font-size:0.85rem; color:var(--text-secondary);">Sin certificados por lote registrados.</div>';
-      } else {
-        lotes.forEach(l => {
-          const row = document.createElement('div');
-          row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-color);';
-          row.innerHTML = `
-            <div style="font-size:0.88rem; color:var(--text-primary);">
-              📦 Lote: <strong>${l.lote}</strong>
-            </div>
-            <a href="${l.link}" target="_blank" class="btn-primary" style="padding:4px 10px; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
-              🔗 Abrir Certificado
-            </a>`;
-          drawerLotesList.appendChild(row);
-        });
-      }
-    }
+    const lotesSearch = document.getElementById('drawer-lotes-search');
+    if (lotesSearch) lotesSearch.value = '';
+    renderDrawerLotes();
 
     renderDrawerDocStatus();
     renderFileList();
@@ -931,16 +951,28 @@ function renderModalLotes() {
     return;
   }
   
-  currentModalLotes.forEach((item, index) => {
+  // Sort descending by date (fecha)
+  const sortedLotes = [...currentModalLotes].sort((a, b) => {
+    const fA = a.fecha || '';
+    const fB = b.fecha || '';
+    return fB.localeCompare(fA);
+  });
+  
+  sortedLotes.forEach((item) => {
+    const origIndex = currentModalLotes.findIndex(x => x.lote === item.lote && x.fecha === item.fecha);
+    
     const row = document.createElement('div');
     row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:6px 10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border); margin-bottom: 4px;';
+    
+    const dateFormatted = item.fecha ? `<span style="font-size:0.75rem; color:var(--text-secondary); margin-left:6px;">(${item.fecha})</span>` : '';
+    
     row.innerHTML = `
       <div style="font-size:0.82rem; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; flex:1; padding-right:10px;">
-        📦 Lote: <strong>${item.lote}</strong> - <a href="${item.link}" target="_blank" style="color:var(--accent-color); text-decoration:none;">Ver Enlace 🔗</a>
+        📦 Lote: <strong>${item.lote}</strong> ${dateFormatted} - <a href="${item.link}" target="_blank" style="color:var(--accent-color); text-decoration:none;">Ver Enlace 🔗</a>
       </div>
       <div style="display:flex; gap:6px; flex-shrink:0;">
-        <button type="button" class="btn-secondary" onclick="editModalLote(${index})" style="padding:4px 8px; font-size:0.75rem;">✏️</button>
-        <button type="button" class="btn-danger" onclick="deleteModalLote(${index})" style="padding:4px 8px; font-size:0.75rem; background:var(--danger-color); border:none; border-radius:4px; color:white; cursor:pointer;">🗑️</button>
+        <button type="button" class="btn-secondary" onclick="editModalLote(${origIndex})" style="padding:4px 8px; font-size:0.75rem;">✏️</button>
+        <button type="button" class="btn-danger" onclick="deleteModalLote(${origIndex})" style="padding:4px 8px; font-size:0.75rem; background:var(--danger-color); border:none; border-radius:4px; color:white; cursor:pointer;">🗑️</button>
       </div>`;
     modalLotesList.appendChild(row);
   });
@@ -950,6 +982,7 @@ function editModalLote(index) {
   const item = currentModalLotes[index];
   if (!item) return;
   document.getElementById('modal-lote-number').value = item.lote;
+  document.getElementById('modal-lote-date').value = item.fecha || '';
   document.getElementById('modal-lote-link').value = item.link;
   document.getElementById('modal-lote-edit-index').value = index.toString();
   document.getElementById('btn-modal-add-lote').textContent = '💾 Actualizar';
@@ -966,32 +999,35 @@ window.deleteModalLote = deleteModalLote;
 
 function handleAddModalLote() {
   const loteInput = document.getElementById('modal-lote-number');
+  const dateInput = document.getElementById('modal-lote-date');
   const linkInput = document.getElementById('modal-lote-link');
   const editIndexInput = document.getElementById('modal-lote-edit-index');
   
-  if (!loteInput || !linkInput) return;
+  if (!loteInput || !linkInput || !dateInput) return;
   
   const lote = loteInput.value.trim();
+  const fecha = dateInput.value.trim();
   const link = linkInput.value.trim();
   
-  if (!lote || !link) {
-    return showToast('Por favor escribe el número de lote y pega el enlace del certificado.', 'danger');
+  if (!lote || !link || !fecha) {
+    return showToast('Por favor escribe el lote, selecciona la fecha y pega el enlace del certificado.', 'danger');
   }
   
   const editIdxStr = editIndexInput ? editIndexInput.value : '';
   
   if (editIdxStr !== '') {
     const idx = parseInt(editIdxStr);
-    currentModalLotes[idx] = { lote, link };
+    currentModalLotes[idx] = { lote, fecha, link };
   } else {
     const isDuplicate = currentModalLotes.some(item => item.lote.toLowerCase() === lote.toLowerCase());
     if (isDuplicate) {
       return showToast('Ya agregaste un certificado para este lote.', 'danger');
     }
-    currentModalLotes.push({ lote, link });
+    currentModalLotes.push({ lote, fecha, link });
   }
   
   loteInput.value = '';
+  dateInput.value = '';
   linkInput.value = '';
   if (editIndexInput) editIndexInput.value = '';
   
@@ -1034,10 +1070,12 @@ function openSupplierModal(supplier = null) {
   });
 
   const loteNumberInput = document.getElementById('modal-lote-number');
+  const loteDateInput = document.getElementById('modal-lote-date');
   const loteLinkInput = document.getElementById('modal-lote-link');
   const loteEditIndex = document.getElementById('modal-lote-edit-index');
   const btnModalAddLote = document.getElementById('btn-modal-add-lote');
   if (loteNumberInput) loteNumberInput.value = '';
+  if (loteDateInput) loteDateInput.value = '';
   if (loteLinkInput) loteLinkInput.value = '';
   if (loteEditIndex) loteEditIndex.value = '';
   if (btnModalAddLote) btnModalAddLote.textContent = '➕ Guardar Lote';
@@ -2146,6 +2184,13 @@ function setupEventListeners() {
   if (configSearchInput) configSearchInput.addEventListener('input', filterConfigItems);
 
   if (drawerFileSearch) drawerFileSearch.addEventListener('input', filterDrawerFiles);
+  
+  const drawerLotesSearch = document.getElementById('drawer-lotes-search');
+  if (drawerLotesSearch) {
+    drawerLotesSearch.addEventListener('input', (e) => {
+      renderDrawerLotes(e.target.value);
+    });
+  }
 
   // Bind change listeners to the 10 document file inputs
   Object.keys(DOC_FIELDS).forEach(key => {

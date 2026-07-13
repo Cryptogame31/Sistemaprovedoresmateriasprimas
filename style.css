@@ -1710,6 +1710,13 @@ header {
   }
 }
 
+@media (max-width: 600px) {
+  .modal-lotes-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+}
+
 
 
 
