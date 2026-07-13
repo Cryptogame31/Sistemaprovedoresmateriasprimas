@@ -1,0 +1,22 @@
+{
+  "name": "Sistema de Control de Materias Primas",
+  "short_name": "SGC Materias Primas",
+  "description": "Sistema de Gestión de Calidad e Inocuidad de Materias Primas e Insumos",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b1329",
+  "theme_color": "#0b1329",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

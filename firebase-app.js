@@ -2260,4 +2260,39 @@ function setupEventListeners() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeDrawer(); closeSupplierModal(); closeUploadModal(); }
   });
+
+  // PWA Installation & Service Worker Registration
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const btnInstallApp = document.getElementById('btn-install-app');
+    if (btnInstallApp) btnInstallApp.style.display = 'flex';
+  });
+
+  const btnInstallApp = document.getElementById('btn-install-app');
+  if (btnInstallApp) {
+    btnInstallApp.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`PWA install prompt choice: ${outcome}`);
+      deferredPrompt = null;
+      btnInstallApp.style.display = 'none';
+    });
+  }
+
+  window.addEventListener('appinstalled', (evt) => {
+    console.log('App installed successfully!');
+    showToast('¡Aplicación descargada e instalada con éxito!');
+    if (btnInstallApp) btnInstallApp.style.display = 'none';
+  });
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Service Worker registered!', reg))
+        .catch(err => console.error('Service Worker registration failed!', err));
+    });
+  }
 }

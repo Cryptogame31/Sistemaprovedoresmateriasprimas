@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Calidad - Materias Primas e Insumos</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b1329">
+  <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
   <script>
@@ -60,6 +63,7 @@
         <p>Registro y seguimiento de documentación técnica por materia prima, fabricante y proveedor.</p>
       </div>
       <div class="header-actions">
+        <button class="btn-primary" id="btn-install-app" style="display:none; padding:10px 16px; background:linear-gradient(135deg, var(--accent-color), #06b6d4); border:none; display:flex; align-items:center; gap:6px;">📲 Descargar App</button>
         <button class="btn-primary" id="btn-new-supplier">➕ Nuevo Registro</button>
         <button class="btn-secondary" id="btn-sync-excel">🔄 Sincronizar Excel</button>
         <button class="btn-danger" id="btn-logout" style="background:#ef4444; border:none; padding:10px 16px; display:flex; align-items:center; gap:6px;"><span style="font-size:1rem;">🚪</span> Cerrar Sesión</button>
@@ -743,6 +747,6 @@
   <script src="firebase-config.js"></script>
 
   <!-- App (Firebase version) -->
-  <script src="firebase-app.js?v=17"></script>
+  <script src="firebase-app.js?v=18"></script>
 </body>
 </html>
