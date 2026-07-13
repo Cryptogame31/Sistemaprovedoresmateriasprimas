@@ -584,14 +584,47 @@ function populateCatalogsDropdowns() {
 }
 
 // ── DRAWER ────────────────────────────────────────────────────
+function formatEntityListWithLinks(namesStr, roleName) {
+  const names = (namesStr || '').split(',').map(n => n.trim()).filter(Boolean);
+  if (!names.length) return '—';
+  
+  return names.map(name => {
+    const entities = appData?.config?.entities || [];
+    const ent = entities.find(e => e.name.toLowerCase() === name.toLowerCase());
+    
+    if (ent) {
+      let certLinksHtml = '';
+      if (ent.cert_links) {
+        const urls = ent.cert_links.split(',').map(u => u.trim()).filter(Boolean);
+        urls.forEach((url, i) => {
+          certLinksHtml += `<a href="${url}" target="_blank" style="margin-top:4px; font-size:0.72rem; color:var(--accent-color); text-decoration:none; font-weight:600; background:rgba(6,182,212,0.1); padding:2px 6px; border-radius:3px; display:inline-flex; align-items:center; gap:2px;">📜 Certificado ${urls.length > 1 ? (i + 1) : ''}</a>`;
+        });
+      }
+      
+      const nitInfo = ent.nit ? `<span style="font-size:0.75rem; color:var(--text-secondary); margin-left:6px;">(NIT: ${ent.nit})</span>` : '';
+      
+      return `
+        <div style="margin-bottom:8px;">
+          <div style="font-weight:600; color:var(--text-primary); display:flex; align-items:center; flex-wrap:wrap;">
+            <span>${ent.name}</span>
+            ${nitInfo}
+          </div>
+          ${certLinksHtml ? `<div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:2px;">${certLinksHtml}</div>` : ''}
+        </div>`;
+    }
+    
+    return `<div style="font-weight:600; color:var(--text-primary); margin-bottom:4px;">${name}</div>`;
+  }).join('');
+}
+
 function openDrawer(supplier) {
   try {
     selectedSupplier = supplier;
     if (drawerTitle) drawerTitle.textContent     = supplier.material;
     if (drawerMaterial) drawerMaterial.textContent  = supplier.material;
-    if (drawerProvider) drawerProvider.textContent  = supplier.provider   || '—';
-    if (drawerDistributor) drawerDistributor.textContent = supplier.distributor || '—';
-    if (drawerCliente) drawerCliente.textContent   = supplier.cliente    || '—';
+    if (drawerProvider) drawerProvider.innerHTML  = formatEntityListWithLinks(supplier.provider, 'fabricante');
+    if (drawerDistributor) drawerDistributor.innerHTML = formatEntityListWithLinks(supplier.distributor, 'proveedor');
+    if (drawerCliente) drawerCliente.innerHTML   = formatEntityListWithLinks(supplier.cliente, 'cliente');
     if (drawerCodigo) drawerCodigo.textContent    = supplier.codigo     || '—';
     if (drawerCategoria) drawerCategoria.textContent = supplier.folder_type;
     if (document.getElementById('drawer-excel-categoria')) {
@@ -1255,6 +1288,7 @@ function renderCatalogItemsList() {
     const nit        = typeof item === 'object' ? item.nit        : '';
     const contact    = typeof item === 'object' ? item.contact    : '';
     const cert       = typeof item === 'object' ? item.cert       : '';
+    const certLinks  = typeof item === 'object' ? (item.cert_links || '') : '';
     
     let detailsHtml  = '';
     if (type !== 'folder_types') {
@@ -1270,6 +1304,17 @@ function renderCatalogItemsList() {
       if (rolesList.length) parts.push(`<strong>Roles:</strong> ${rolesList.join(', ')}`);
       
       if (parts.length) detailsHtml = `<div style="font-size:0.8rem;color:var(--text-secondary);margin-top:4px;line-height:1.4;">${parts.join(' · ')}</div>`;
+      
+      if (certLinks) {
+        let certButtonsHtml = '';
+        const urls = certLinks.split(',').map(u => u.trim()).filter(Boolean);
+        urls.forEach((url, idx) => {
+          certButtonsHtml += `<a href="${url}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; font-size:0.75rem; color:var(--accent-color); text-decoration:none; font-weight:600; background:rgba(6,182,212,0.1); padding:2px 8px; border-radius:4px; margin-right:6px; margin-top:4px;">📜 Certificado ${urls.length > 1 ? (idx + 1) : ''}</a>`;
+        });
+        if (certButtonsHtml) {
+          detailsHtml += `<div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:4px;">${certButtonsHtml}</div>`;
+        }
+      }
     }
     
     const row = document.createElement('div');
@@ -1300,6 +1345,9 @@ function clearCatalogForm() {
   document.getElementById('catalog-new-contact-input').value= '';
   document.getElementById('catalog-new-cert-input').value   = '';
   
+  const certLinksInput = document.getElementById('catalog-new-cert-links-input');
+  if (certLinksInput) certLinksInput.value = '';
+  
   document.getElementById('catalog-role-fabricante').checked = false;
   document.getElementById('catalog-role-proveedor').checked  = false;
   document.getElementById('catalog-role-cliente').checked    = false;
@@ -1320,6 +1368,8 @@ async function handleCatalogAddItem() {
   const nit        = document.getElementById('catalog-new-nit-input').value.trim();
   const contact    = document.getElementById('catalog-new-contact-input').value.trim();
   const cert       = document.getElementById('catalog-new-cert-input').value.trim();
+  const certLinksInput = document.getElementById('catalog-new-cert-links-input');
+  const cert_links = certLinksInput ? certLinksInput.value.trim() : '';
   
   const isFab      = document.getElementById('catalog-role-fabricante').checked;
   const isProv     = document.getElementById('catalog-role-proveedor').checked;
@@ -1338,7 +1388,7 @@ async function handleCatalogAddItem() {
   try {
     const newItem = type === 'folder_types'
       ? { name, folder_name: folderName }
-      : { name, folder_name: folderName, nit, contact, cert, roles: { fabricante: isFab, proveedor: isProv, cliente: isCli } };
+      : { name, folder_name: folderName, nit, contact, cert, cert_links, roles: { fabricante: isFab, proveedor: isProv, cliente: isCli } };
 
     if (isEdit) {
       appData.config[type][parseInt(editIndexVal)] = newItem;
@@ -1368,6 +1418,9 @@ function handleEditCatalogItem(type, index) {
     document.getElementById('catalog-new-nit-input').value     = item.nit     || '';
     document.getElementById('catalog-new-contact-input').value = item.contact || '';
     document.getElementById('catalog-new-cert-input').value    = item.cert    || '';
+    
+    const certLinksInput = document.getElementById('catalog-new-cert-links-input');
+    if (certLinksInput) certLinksInput.value = item.cert_links || '';
     
     if (item.roles) {
       document.getElementById('catalog-role-fabricante').checked = !!item.roles.fabricante;
