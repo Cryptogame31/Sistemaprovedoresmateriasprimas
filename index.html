@@ -514,6 +514,7 @@
           <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Ficha Técnica (FT) Fabricante</div>
             <input type="text" id="doc-status-ft" class="form-input" placeholder="Ej: Si / No / Año" style="padding:6px 10px; font-size:0.85rem;">
+            <input type="text" id="doc-link-ft" class="form-input" placeholder="Enlace Google Drive / URL" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
               <input type="file" id="file-upload-ft" style="display:none;" accept=".pdf">
               <button type="button" onclick="document.getElementById('file-upload-ft').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
@@ -525,6 +526,7 @@
           <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Ficha Técnica Interna</div>
             <input type="text" id="doc-status-ft-interna" class="form-input" placeholder="Ej: Si / No / Año" style="padding:6px 10px; font-size:0.85rem;">
+            <input type="text" id="doc-link-ft-interna" class="form-input" placeholder="Enlace Google Drive / URL" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
               <input type="file" id="file-upload-ft-interna" style="display:none;" accept=".pdf">
               <button type="button" onclick="document.getElementById('file-upload-ft-interna').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
@@ -536,6 +538,7 @@
           <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Acta Sanitaria (Año Visita)</div>
             <input type="text" id="doc-status-acta" class="form-input" placeholder="Ej: 2025 / x / No aplica" style="padding:6px 10px; font-size:0.85rem;">
+            <input type="text" id="doc-link-acta" class="form-input" placeholder="Enlace Google Drive / URL" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
               <input type="file" id="file-upload-acta" style="display:none;" accept=".pdf">
               <button type="button" onclick="document.getElementById('file-upload-acta').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
@@ -544,10 +547,11 @@
           </div>
 
           <!-- Certificación Proveedor (SGC) -->
-          <div class="modal-doc-row col-4">
+          <div class="modal-doc-row col-5">
             <div style="font-weight:600; font-size:0.85rem;">Certificación SGC Proveedor</div>
             <input type="text" id="doc-status-cert-tipo" class="form-input" placeholder="Ej: FSSC 22000" style="padding:6px 10px; font-size:0.85rem;">
             <input type="text" id="doc-status-cert-vence" class="form-input" placeholder="Año: 2028" style="padding:6px 10px; font-size:0.85rem;">
+            <input type="text" id="doc-link-cert" class="form-input" placeholder="Enlace Google Drive / URL" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
               <input type="file" id="file-upload-cert" style="display:none;" accept=".pdf">
               <button type="button" onclick="document.getElementById('file-upload-cert').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
@@ -559,6 +563,7 @@
           <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Decl. Alérgenos (Materia Prima)</div>
             <input type="text" id="doc-status-alergenos" class="form-input" placeholder="Ej: En carta 2026 / No aplica" style="padding:6px 10px; font-size:0.85rem;">
+            <input type="text" id="doc-link-alergenos" class="form-input" placeholder="Enlace Google Drive / URL" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
               <input type="file" id="file-upload-alergenos" style="display:none;" accept=".pdf">
               <button type="button" onclick="document.getElementById('file-upload-alergenos').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
@@ -570,6 +575,7 @@
           <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Apto Alimentos (Envase/Tapa)</div>
             <input type="text" id="doc-status-apto" class="form-input" placeholder="Ej: No aplica / Si / x" style="padding:6px 10px; font-size:0.85rem;">
+            <input type="text" id="doc-link-apto" class="form-input" placeholder="Enlace Google Drive / URL" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
               <input type="file" id="file-upload-apto" style="display:none;" accept=".pdf">
               <button type="button" onclick="document.getElementById('file-upload-apto').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
@@ -581,6 +587,7 @@
           <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Análisis FQ (Metales/Pest.)</div>
             <input type="text" id="doc-status-fq" class="form-input" placeholder="Ej: Metales pesados 2022 / x" style="padding:6px 10px; font-size:0.85rem;">
+            <input type="text" id="doc-link-fq" class="form-input" placeholder="Enlace Google Drive / URL" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
               <input type="file" id="file-upload-fq" style="display:none;" accept=".pdf">
               <button type="button" onclick="document.getElementById('file-upload-fq').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
@@ -592,6 +599,7 @@
           <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Carta Firmada: Fraude</div>
             <input type="text" id="doc-status-fraude" class="form-input" placeholder="Ej: Si / No / x" style="padding:6px 10px; font-size:0.85rem;">
+            <input type="text" id="doc-link-fraude" class="form-input" placeholder="Enlace Google Drive / URL" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
               <input type="file" id="file-upload-fraude" style="display:none;" accept=".pdf">
               <button type="button" onclick="document.getElementById('file-upload-fraude').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
@@ -603,6 +611,7 @@
           <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Carta Firmada: Especificación</div>
             <input type="text" id="doc-status-especificacion" class="form-input" placeholder="Ej: Si / No / x" style="padding:6px 10px; font-size:0.85rem;">
+            <input type="text" id="doc-link-especificacion" class="form-input" placeholder="Enlace Google Drive / URL" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
               <input type="file" id="file-upload-especificacion" style="display:none;" accept=".pdf">
               <button type="button" onclick="document.getElementById('file-upload-especificacion').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
@@ -614,6 +623,7 @@
           <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Carta Firmada: Otras</div>
             <input type="text" id="doc-status-otras" class="form-input" placeholder="Ej: vida util / Origen / GMO" style="padding:6px 10px; font-size:0.85rem;">
+            <input type="text" id="doc-link-otras" class="form-input" placeholder="Enlace Google Drive / URL" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
               <input type="file" id="file-upload-otras" style="display:none;" accept=".pdf">
               <button type="button" onclick="document.getElementById('file-upload-otras').click()" class="btn-secondary" style="padding:6px 10px; font-size:0.75rem; white-space:nowrap;">📎 Subir PDF</button>
@@ -688,6 +698,6 @@
   <script src="firebase-config.js"></script>
 
   <!-- App (Firebase version) -->
-  <script src="firebase-app.js?v=12"></script>
+  <script src="firebase-app.js?v=13"></script>
 </body>
 </html>

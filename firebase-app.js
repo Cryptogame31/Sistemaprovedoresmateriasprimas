@@ -109,16 +109,16 @@ const supplierFtDistYearInput= null; // removed from HTML
 const supplierCategoria = document.getElementById('supplier-categoria');
 
 const DOC_FIELDS = {
-  ft: { statusId: 'doc-status-ft', fileId: 'file-upload-ft', statusTextId: 'file-status-ft', category: 'Ficha Técnica (FT)', dbKey: 'doc_status_ft' },
-  ft_interna: { statusId: 'doc-status-ft-interna', fileId: 'file-upload-ft-interna', statusTextId: 'file-status-ft-interna', category: 'Ficha Técnica Interna', dbKey: 'doc_status_ft_interna' },
-  acta: { statusId: 'doc-status-acta', fileId: 'file-upload-acta', statusTextId: 'file-status-acta', category: 'Acta Sanitaria', dbKey: 'doc_status_acta' },
-  cert: { statusId: 'doc-status-cert-tipo', fileId: 'file-upload-cert', statusTextId: 'file-status-cert', category: 'Certificación Proveedor', dbKey: 'doc_status_cert_tipo', venceId: 'doc-status-cert-vence', venceDbKey: 'doc_status_cert_vence' },
-  alergenos: { statusId: 'doc-status-alergenos', fileId: 'file-upload-alergenos', statusTextId: 'file-status-alergenos', category: 'Declaración de Alérgenos', dbKey: 'doc_status_alergenos' },
-  apto: { statusId: 'doc-status-apto', fileId: 'file-upload-apto', statusTextId: 'file-status-apto', category: 'Declaración Apto Alimentos', dbKey: 'doc_status_apto' },
-  fq: { statusId: 'doc-status-fq', fileId: 'file-upload-fq', statusTextId: 'file-status-fq', category: 'Análisis FQ', dbKey: 'doc_status_fq' },
-  fraude: { statusId: 'doc-status-fraude', fileId: 'file-upload-fraude', statusTextId: 'file-status-fraude', category: 'Carta Fraude', dbKey: 'doc_status_fraude' },
-  especificacion: { statusId: 'doc-status-especificacion', fileId: 'file-upload-especificacion', statusTextId: 'file-status-especificacion', category: 'Carta Especificacion', dbKey: 'doc_status_especificacion' },
-  otras: { statusId: 'doc-status-otras', fileId: 'file-upload-otras', statusTextId: 'file-status-otras', category: 'Otros Documentos', dbKey: 'doc_status_otras' }
+  ft: { statusId: 'doc-status-ft', fileId: 'file-upload-ft', statusTextId: 'file-status-ft', category: 'Ficha Técnica (FT)', dbKey: 'doc_status_ft', linkId: 'doc-link-ft', linkDbKey: 'doc_link_ft' },
+  ft_interna: { statusId: 'doc-status-ft-interna', fileId: 'file-upload-ft-interna', statusTextId: 'file-status-ft-interna', category: 'Ficha Técnica Interna', dbKey: 'doc_status_ft_interna', linkId: 'doc-link-ft-interna', linkDbKey: 'doc_link_ft_interna' },
+  acta: { statusId: 'doc-status-acta', fileId: 'file-upload-acta', statusTextId: 'file-status-acta', category: 'Acta Sanitaria', dbKey: 'doc_status_acta', linkId: 'doc-link-acta', linkDbKey: 'doc_link_acta' },
+  cert: { statusId: 'doc-status-cert-tipo', fileId: 'file-upload-cert', statusTextId: 'file-status-cert', category: 'Certificación Proveedor', dbKey: 'doc_status_cert_tipo', venceId: 'doc-status-cert-vence', venceDbKey: 'doc_status_cert_vence', linkId: 'doc-link-cert', linkDbKey: 'doc_link_cert' },
+  alergenos: { statusId: 'doc-status-alergenos', fileId: 'file-upload-alergenos', statusTextId: 'file-status-alergenos', category: 'Declaración de Alérgenos', dbKey: 'doc_status_alergenos', linkId: 'doc-link-alergenos', linkDbKey: 'doc_link_alergenos' },
+  apto: { statusId: 'doc-status-apto', fileId: 'file-upload-apto', statusTextId: 'file-status-apto', category: 'Declaración Apto Alimentos', dbKey: 'doc_status_apto', linkId: 'doc-link-apto', linkDbKey: 'doc_link_apto' },
+  fq: { statusId: 'doc-status-fq', fileId: 'file-upload-fq', statusTextId: 'file-status-fq', category: 'Análisis FQ', dbKey: 'doc_status_fq', linkId: 'doc-link-fq', linkDbKey: 'doc_link_fq' },
+  fraude: { statusId: 'doc-status-fraude', fileId: 'file-upload-fraude', statusTextId: 'file-status-fraude', category: 'Carta Fraude', dbKey: 'doc_status_fraude', linkId: 'doc-link-fraude', linkDbKey: 'doc_link_fraude' },
+  especificacion: { statusId: 'doc-status-especificacion', fileId: 'file-upload-especificacion', statusTextId: 'file-status-especificacion', category: 'Carta Especificacion', dbKey: 'doc_status_especificacion', linkId: 'doc-link-especificacion', linkDbKey: 'doc_link_especificacion' },
+  otras: { statusId: 'doc-status-otras', fileId: 'file-upload-otras', statusTextId: 'file-status-otras', category: 'Otros Documentos', dbKey: 'doc_status_otras', linkId: 'doc-link-otras', linkDbKey: 'doc_link_otras' }
 };
 
 let pendingFiles = {};
@@ -404,19 +404,22 @@ function renderTable(suppliers) {
         <th colspan="3">Cartas Firmadas<br><small style="font-size:10px;">Fraude | Spec | Otras</small></th>
       </tr></thead><tbody>`;
 
-  function getStatusBadge(statusVal, fallbackVal = null) {
+  function getStatusBadge(statusVal, linkVal = null, fallbackVal = null) {
     const val = (statusVal || fallbackVal || '').trim();
     if (!val) return '<span class="badge badge-danger">✗</span>';
     
-    const urlMatch = val.match(/(https?:\/\/[^\s]+)/i);
-    const isUrl = !!urlMatch;
-    const valUrl = isUrl ? urlMatch[1] : null;
+    let valUrl = (linkVal || '').trim();
+    if (!valUrl) {
+      const urlMatch = val.match(/(https?:\/\/[^\s]+)/i);
+      if (urlMatch) valUrl = urlMatch[1];
+    }
+    const isUrl = !!valUrl;
     
     let displayVal = val;
-    if (isUrl) {
+    if (isUrl && !linkVal) {
       displayVal = val.replace(valUrl, '').replace(/\|/g, '').trim();
-      if (!displayVal) displayVal = 'Link';
     }
+    if (!displayVal) displayVal = 'Link';
     
     const valClean = displayVal.toLowerCase();
     
@@ -438,14 +441,18 @@ function renderTable(suppliers) {
     return badgeHtml;
   }
 
-  function getCartaEmoji(val, fallbackVal) {
+  function getCartaEmoji(val, linkVal = null, fallbackVal = null) {
     const status = (val || fallbackVal || '').trim();
-    const urlMatch = status.match(/(https?:\/\/[^\s]+)/i);
-    const isUrl = !!urlMatch;
-    const valUrl = isUrl ? urlMatch[1] : null;
+    
+    let valUrl = (linkVal || '').trim();
+    if (!valUrl) {
+      const urlMatch = status.match(/(https?:\/\/[^\s]+)/i);
+      if (urlMatch) valUrl = urlMatch[1];
+    }
+    const isUrl = !!valUrl;
     
     let cleanStatus = status;
-    if (isUrl) {
+    if (isUrl && !linkVal) {
       cleanStatus = status.replace(valUrl, '').replace(/\|/g, '').trim().toLowerCase();
     } else {
       cleanStatus = status.toLowerCase();
@@ -465,11 +472,11 @@ function renderTable(suppliers) {
   }
 
   suppliers.forEach(s => {
-    const ftFabBadge = getStatusBadge(s.doc_status_ft, s.ft_year);
-    const ftIntBadge = getStatusBadge(s.doc_status_ft_interna, s.ft_dist_year);
+    const ftFabBadge = getStatusBadge(s.doc_status_ft, s.doc_link_ft, s.ft_year);
+    const ftIntBadge = getStatusBadge(s.doc_status_ft_interna, s.doc_link_ft_interna, s.ft_dist_year);
     const haccpClass = s.riesgo_haccp === 'Alto' ? 'badge-danger' : s.riesgo_haccp === 'Medio' ? 'badge-warning' : s.riesgo_haccp === 'Bajo' ? 'badge-success' : 'badge-neutral';
     
-    const certBadge = getStatusBadge(s.doc_status_cert_tipo, s.certificacion);
+    const certBadge = getStatusBadge(s.doc_status_cert_tipo, s.doc_link_cert, s.certificacion);
     
     let vencimientoHtml = '—';
     const vencVal = (s.doc_status_cert_vence || s.cert_fecha || '').trim();
@@ -493,16 +500,16 @@ function renderTable(suppliers) {
         <td class="text-secondary">${s.distributor || '—'}</td>
         <td class="text-center">${ftFabBadge}</td>
         <td class="text-center">${ftIntBadge}</td>
-        <td class="text-center">${getStatusBadge(s.doc_status_acta, s.acta_sanitaria)}</td>
+        <td class="text-center">${getStatusBadge(s.doc_status_acta, s.doc_link_acta, s.acta_sanitaria)}</td>
         <td class="text-center"><span class="badge ${haccpClass}">${s.riesgo_haccp || 'N/A'}</span></td>
         <td class="text-center">${certBadge}</td>
         <td class="text-center">${vencimientoHtml}</td>
-        <td class="text-center">${getStatusBadge(s.doc_status_alergenos, s.decl_alergenos)}</td>
-        <td class="text-center">${getStatusBadge(s.doc_status_apto, s.decl_apto)}</td>
-        <td class="text-center">${getStatusBadge(s.doc_status_fq, s.analisis_fq)}</td>
-        <td class="text-center" style="border-right:none;padding-right:4px;">${getCartaEmoji(s.doc_status_fraude, s.carta_fraude)}</td>
-        <td class="text-center" style="border-left:none;border-right:none;padding:4px;">${getCartaEmoji(s.doc_status_especificacion, s.carta_especificacion)}</td>
-        <td class="text-center" style="border-left:none;padding-left:4px;">${getCartaEmoji(s.doc_status_otras, s.cartas_otras)}</td>
+        <td class="text-center">${getStatusBadge(s.doc_status_alergenos, s.doc_link_alergenos, s.decl_alergenos)}</td>
+        <td class="text-center">${getStatusBadge(s.doc_status_apto, s.doc_link_apto, s.decl_apto)}</td>
+        <td class="text-center">${getStatusBadge(s.doc_status_fq, s.doc_link_fq, s.analisis_fq)}</td>
+        <td class="text-center" style="border-right:none;padding-right:4px;">${getCartaEmoji(s.doc_status_fraude, s.doc_link_fraude, s.carta_fraude)}</td>
+        <td class="text-center" style="border-left:none;border-right:none;padding:4px;">${getCartaEmoji(s.doc_status_especificacion, s.doc_link_especificacion, s.carta_especificacion)}</td>
+        <td class="text-center" style="border-left:none;padding-left:4px;">${getCartaEmoji(s.doc_status_otras, s.doc_link_otras, s.cartas_otras)}</td>
       </tr>`;
   });
   tableHtml += '</tbody></table>';
@@ -623,30 +630,35 @@ function renderDrawerDocStatus() {
   const s = selectedSupplier;
   
   const items = [
-    { label: 'Ficha Técnica (FT) Fabricante', status: s.doc_status_ft, category: 'Ficha Técnica (FT)' },
-    { label: 'Ficha Técnica Interna', status: s.doc_status_ft_interna, category: 'Ficha Técnica Interna' },
-    { label: 'Acta Sanitaria (Año Visita)', status: s.doc_status_acta, category: 'Acta Sanitaria' },
-    { label: 'Certificación SGC Proveedor', status: (s.doc_status_cert_tipo ? `${s.doc_status_cert_tipo} ${s.doc_status_cert_vence ? '(Vence: ' + s.doc_status_cert_vence + ')' : ''}` : null), category: 'Certificación Proveedor' },
-    { label: 'Decl. Alérgenos (Materia Prima)', status: s.doc_status_alergenos, category: 'Declaración de Alérgenos' },
-    { label: 'Apto Alimentos (Envase/Tapa)', status: s.doc_status_apto, category: 'Declaración Apto Alimentos' },
-    { label: 'Análisis FQ (Metales/Pest.)', status: s.doc_status_fq, category: 'Análisis FQ' },
-    { label: 'Carta Firmada: Fraude', status: s.doc_status_fraude, category: 'Carta Fraude' },
-    { label: 'Carta Firmada: Especificación', status: s.doc_status_especificacion, category: 'Carta Especificacion' },
-    { label: 'Carta Firmada: Otras', status: s.doc_status_otras, category: 'Otros Documentos' }
+    { label: 'Ficha Técnica (FT) Fabricante', status: s.doc_status_ft, link: s.doc_link_ft, category: 'Ficha Técnica (FT)' },
+    { label: 'Ficha Técnica Interna', status: s.doc_status_ft_interna, link: s.doc_link_ft_interna, category: 'Ficha Técnica Interna' },
+    { label: 'Acta Sanitaria (Año Visita)', status: s.doc_status_acta, link: s.doc_link_acta, category: 'Acta Sanitaria' },
+    { label: 'Certificación SGC Proveedor', status: (s.doc_status_cert_tipo ? `${s.doc_status_cert_tipo} ${s.doc_status_cert_vence ? '(Vence: ' + s.doc_status_cert_vence + ')' : ''}` : null), link: s.doc_link_cert, category: 'Certificación Proveedor' },
+    { label: 'Decl. Alérgenos (Materia Prima)', status: s.doc_status_alergenos, link: s.doc_link_alergenos, category: 'Declaración de Alérgenos' },
+    { label: 'Apto Alimentos (Envase/Tapa)', status: s.doc_status_apto, link: s.doc_link_apto, category: 'Declaración Apto Alimentos' },
+    { label: 'Análisis FQ (Metales/Pest.)', status: s.doc_status_fq, link: s.doc_link_fq, category: 'Análisis FQ' },
+    { label: 'Carta Firmada: Fraude', status: s.doc_status_fraude, link: s.doc_link_fraude, category: 'Carta Fraude' },
+    { label: 'Carta Firmada: Especificación', status: s.doc_status_especificacion, link: s.doc_link_especificacion, category: 'Carta Especificacion' },
+    { label: 'Carta Firmada: Otras', status: s.doc_status_otras, link: s.doc_link_otras, category: 'Otros Documentos' }
   ];
   
   items.forEach(item => {
     const valText = item.status || 'No';
     const valClean = valText.trim();
-    const urlMatch = valClean.match(/(https?:\/\/[^\s]+)/i);
-    const isUrl = !!urlMatch;
-    const valUrl = isUrl ? urlMatch[1] : null;
+    
+    // Detect URL from dedicated field, or fallback to status text regex
+    let valUrl = item.link ? item.link.trim() : null;
+    if (!valUrl) {
+      const urlMatch = valClean.match(/(https?:\/\/[^\s]+)/i);
+      if (urlMatch) valUrl = urlMatch[1];
+    }
+    const isUrl = !!valUrl;
     
     let displayVal = valClean;
-    if (isUrl) {
+    if (isUrl && !item.link) {
       displayVal = valClean.replace(valUrl, '').replace(/\|/g, '').trim();
-      if (!displayVal) displayVal = 'Enlace Adjunto';
     }
+    if (!displayVal || (displayVal.toLowerCase() === 'no' && isUrl)) displayVal = 'Enlace Adjunto';
 
     const valCleanLower = displayVal.toLowerCase();
     const isCompleted = isUrl || valCleanLower === 'si' || valCleanLower === 'en carta' || /^\d{4}$/.test(valCleanLower) || valCleanLower.includes('vence') || valCleanLower.includes('completo') || valCleanLower.includes('aplica') || valCleanLower.includes('carta');
@@ -870,6 +882,11 @@ function openSupplierModal(supplier = null) {
       if (venceEl) venceEl.value = '';
     }
     
+    if (conf.linkId) {
+      const linkEl = document.getElementById(conf.linkId);
+      if (linkEl) linkEl.value = '';
+    }
+    
     const fileInput = document.getElementById(conf.fileId);
     if (fileInput) fileInput.value = '';
     
@@ -909,6 +926,11 @@ function openSupplierModal(supplier = null) {
       if (conf.venceId && conf.venceDbKey) {
         const venceEl = document.getElementById(conf.venceId);
         if (venceEl) venceEl.value = supplier[conf.venceDbKey] || '';
+      }
+      
+      if (conf.linkId && conf.linkDbKey) {
+        const linkEl = document.getElementById(conf.linkId);
+        if (linkEl) linkEl.value = supplier[conf.linkDbKey] || '';
       }
       
       const file = supplier.files?.find(f => f.category === conf.category);
@@ -1010,6 +1032,11 @@ async function handleSaveSupplier() {
       if (conf.venceId && conf.venceDbKey) {
         const venceEl = document.getElementById(conf.venceId);
         payload[conf.venceDbKey] = venceEl ? venceEl.value.trim() : '';
+      }
+      
+      if (conf.linkId && conf.linkDbKey) {
+        const linkEl = document.getElementById(conf.linkId);
+        payload[conf.linkDbKey] = linkEl ? linkEl.value.trim() : '';
       }
     });
 

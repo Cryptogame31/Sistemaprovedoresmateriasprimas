@@ -1559,7 +1559,7 @@ header {
 /* Filas de Documentos en Modal */
 .modal-doc-row {
   display: grid;
-  grid-template-columns: 1.8fr 1fr 1.2fr;
+  grid-template-columns: 1.5fr 1fr 1.5fr 1.2fr;
   gap: 12px;
   align-items: center;
   background: rgba(255, 255, 255, 0.02);
@@ -1568,23 +1568,30 @@ header {
   border: 1px solid var(--glass-border);
 }
 
-.modal-doc-row.col-4 {
-  grid-template-columns: 1.8fr 0.5fr 0.5fr 1.2fr;
+.modal-doc-row.col-5 {
+  display: grid;
+  grid-template-columns: 1.5fr 0.7fr 0.7fr 1.2fr 1.2fr;
+  gap: 12px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border);
 }
 
 @media (max-width: 600px) {
-  .modal-doc-row, .modal-doc-row.col-4 {
+  .modal-doc-row, .modal-doc-row.col-5 {
     grid-template-columns: 1fr !important;
     gap: 8px;
     padding: 12px;
   }
-  .modal-doc-row div, .modal-doc-row.col-4 div {
+  .modal-doc-row div, .modal-doc-row.col-5 div {
     width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
-  .modal-doc-row button, .modal-doc-row.col-4 button {
+  .modal-doc-row button, .modal-doc-row.col-5 button {
     padding: 8px 12px;
     font-size: 0.8rem;
   }
