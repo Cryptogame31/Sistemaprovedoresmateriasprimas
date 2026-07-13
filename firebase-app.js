@@ -639,14 +639,14 @@ function filterDrawerFiles() {
 
 // ── FILE DELETE (Firebase Storage + Firestore) ────────────────
 async function handleDeleteFile(file) {
-  if (!confirm(`¿Eliminar permanentemente "${file.name}"?`)) return;
+  if (!confirm(`¿Eliminar permanentemente "${file?.name || 'este archivo'}"?`)) return;
   try {
     // Eliminar de Firebase Storage si tiene firebase_path
-    if (file.firebase_path) {
+    if (file && typeof file.firebase_path === 'string' && file.firebase_path.trim() !== '' && file.firebase_path !== 'undefined' && file.firebase_path !== 'null') {
       await storage.ref(file.firebase_path).delete().catch(() => {});
     }
-    // Actualizar el array files en Firestore
-    if (selectedSupplier._id) {
+    showToast('Archivo eliminado correctamente.');
+    if (selectedSupplier && selectedSupplier._id) {
       const remaining = (selectedSupplier.files || []).filter(f => f.name !== file.name || f.last_modified !== file.last_modified);
       await db.collection('materias_primas').doc(selectedSupplier._id).update({ files: remaining, files_count: remaining.length });
       selectedSupplier.files = remaining;
@@ -666,11 +666,11 @@ let isAutoNaming = false;
 
 function autoGenerateFolderName() {
   if (!isAutoNaming) return;
-  const mat  = supplierMaterialInput.value.trim().toUpperCase().replace(/[\\/:*?\"<>|]/g, '_').replace(/\s+/g, '_');
-  const provs = Array.from(document.querySelectorAll('.fabricante-select-chk:checked')).map(c => c.value.trim().toUpperCase().replace(/[\\/:*?\"<>|]/g, '_').replace(/\s+/g, '_'));
-  const dists = Array.from(document.querySelectorAll('.proveedor-select-chk:checked')).map(c => c.value.trim().toUpperCase().replace(/[\\/:*?\"<>|]/g, '_').replace(/\s+/g, '_'));
+  const mat  = (supplierMaterialInput?.value || '').trim().toUpperCase().replace(/[\\/:*?\"<>|]/g, '_').replace(/\s+/g, '_');
+  const provs = Array.from(document.querySelectorAll('.fabricante-select-chk:checked')).map(c => (c.value || '').trim().toUpperCase().replace(/[\\/:*?\"<>|]/g, '_').replace(/\s+/g, '_'));
+  const dists = Array.from(document.querySelectorAll('.proveedor-select-chk:checked')).map(c => (c.value || '').trim().toUpperCase().replace(/[\\/:*?\"<>|]/g, '_').replace(/\s+/g, '_'));
   const allNames = [mat, ...provs, ...dists].filter(p => p.length > 0).join('_');
-  supplierNameInput.value = allNames.slice(0, 100);
+  if (supplierNameInput) supplierNameInput.value = allNames.slice(0, 100);
 }
 
 function populateChecklistCatalog(containerId, roleName, selectedString = '') {
@@ -862,7 +862,7 @@ async function handleSaveSupplier() {
       const prevIndex = files.findIndex(f => f.category === conf.category);
       if (prevIndex !== -1) {
         const prevFile = files[prevIndex];
-        if (prevFile.firebase_path) {
+        if (prevFile && typeof prevFile.firebase_path === 'string' && prevFile.firebase_path.trim() !== '' && prevFile.firebase_path !== 'undefined' && prevFile.firebase_path !== 'null') {
           await storage.ref(prevFile.firebase_path).delete().catch(() => {});
         }
         files.splice(prevIndex, 1);
