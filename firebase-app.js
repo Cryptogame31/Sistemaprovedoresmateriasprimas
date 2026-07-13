@@ -855,9 +855,7 @@ async function handleSaveSupplier() {
       const conf = DOC_FIELDS[key];
       
       const storagePath = `documentos/${folderName}/${Date.now()}_${fileObj.name}`;
-      const storageRef  = storage.ref(storagePath);
-      const snap        = await storageRef.put(fileObj);
-      const downloadURL = await snap.ref.getDownloadURL();
+      const downloadURL = await uploadFileToStorage(storagePath, fileObj);
       
       const prevIndex = files.findIndex(f => f.category === conf.category);
       if (prevIndex !== -1) {
@@ -945,6 +943,22 @@ async function handleDeleteSupplier() {
 }
 
 // ── UPLOAD DOCUMENT (Firebase Storage + Firestore) ────────────
+function uploadFileToStorage(storagePath, fileObject) {
+  return new Promise((resolve, reject) => {
+    const storageRef = storage.ref(storagePath);
+    const uploadTask = storageRef.put(fileObject);
+    uploadTask.on('state_changed',
+      null,
+      (err) => reject(err),
+      () => {
+        uploadTask.snapshot.ref.getDownloadURL()
+          .then(url => resolve(url))
+          .catch(err => reject(err));
+      }
+    );
+  });
+}
+
 function openUploadModal() {
   uploadFileInput.value = '';
   uploadFileNameDisplay.textContent = 'Haga clic o arrastre un archivo aquí';
@@ -960,9 +974,6 @@ function processFile(file) {
   uploadFileName   = file.name;
   uploadFileObject = file;
   uploadFileNameDisplay.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
-  const reader = new FileReader();
-  reader.onload = evt => { uploadFileBytes = evt.target.result.split(',')[1]; };
-  reader.readAsDataURL(file);
 }
 
 async function handleUploadSubmit() {
@@ -972,9 +983,7 @@ async function handleUploadSubmit() {
   btnSubmitUpload.textContent = 'Subiendo...';
   try {
     const storagePath = `documentos/${selectedSupplier.folder_name}/${Date.now()}_${uploadFileName}`;
-    const storageRef  = storage.ref(storagePath);
-    const snap        = await storageRef.put(uploadFileObject);
-    const downloadURL = await snap.ref.getDownloadURL();
+    const downloadURL = await uploadFileToStorage(storagePath, uploadFileObject);
 
     const docId = selectedSupplier._id;
     if (docId) {

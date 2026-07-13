@@ -354,7 +354,7 @@
         <div class="drawer-title" id="drawer-title">Nombre</div>
         <span id="drawer-type" class="supplier-type">Tipo</span>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div class="drawer-header-actions">
         <button class="btn-primary" id="btn-report-supplier" style="padding:8px 14px;font-size:0.82rem;background:var(--success-color);border:none;border-radius:4px;cursor:pointer;">🖨️ Reporte</button>
         <button class="btn-secondary" id="btn-edit-supplier" style="padding:8px 14px;font-size:0.82rem;">✏️ Editar</button>
         <button class="btn-danger" id="btn-delete-supplier" style="padding:8px 14px;font-size:0.82rem;">🗑️ Eliminar</button>
@@ -363,7 +363,7 @@
     </div>
 
     <!-- Info Grid -->
-    <div class="metadata-grid" id="drawer-meta-grid" style="grid-template-columns:repeat(4,1fr); gap:12px; padding:16px;">
+    <div class="metadata-grid" id="drawer-meta-grid">
       <div class="meta-item"><span class="meta-label">Código</span><span class="meta-val" id="drawer-codigo">—</span></div>
       <div class="meta-item"><span class="meta-label">Categoría Dashboard</span><span class="meta-val" id="drawer-categoria">—</span></div>
       <div class="meta-item"><span class="meta-label">Categoría Excel</span><span class="meta-val" id="drawer-excel-categoria">—</span></div>
@@ -412,7 +412,7 @@
 
         <!-- SECCIÓN 1: Identificación -->
         <div class="form-section-title" style="font-size:1.1rem;font-weight:600;margin-bottom:12px;color:var(--accent-color);border-bottom:1px solid var(--border-color);padding-bottom:6px;">📋 Datos Generales de la Materia Prima</div>
-        <div class="form-row-4" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:16px;margin-bottom:12px;">
+        <div class="form-row-4">
           <div class="form-group">
             <label class="form-label" for="supplier-codigo" style="display:block;margin-bottom:4px;font-size:0.85rem;">Código</label>
             <input type="text" id="supplier-codigo" class="form-input" placeholder="Ej: MP-001" style="width:100%;">
@@ -443,7 +443,7 @@
 
         <!-- SECCIÓN 2: Fabricante, Proveedor y Cliente (Múltiples Opciones) -->
         <div class="form-section-title" style="font-size:1.1rem;font-weight:600;margin-top:20px;margin-bottom:12px;color:var(--accent-color);border-bottom:1px solid var(--border-color);padding-bottom:6px;">🏢 Fabricantes, Proveedores y Clientes</div>
-        <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;">
+        <div class="form-row-2">
           <div class="form-group">
             <label class="form-label" style="display:block;margin-bottom:4px;font-size:0.85rem;font-weight:600;">Fabricante(s)</label>
             <div class="multi-select-box" id="provider-checkbox-list" style="max-height:110px; overflow-y:auto; border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:8px; background:rgba(0,0,0,0.25); display:flex; flex-direction:column; gap:4px;">
@@ -482,7 +482,7 @@
         
         <div style="display:flex; flex-direction:column; gap:12px;">
           <!-- FT Fabricante -->
-          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+          <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Ficha Técnica (FT) Fabricante</div>
             <input type="text" id="doc-status-ft" class="form-input" placeholder="Ej: Si / No / Año" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -493,7 +493,7 @@
           </div>
 
           <!-- FT Interna -->
-          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+          <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Ficha Técnica Interna</div>
             <input type="text" id="doc-status-ft-interna" class="form-input" placeholder="Ej: Si / No / Año" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -504,7 +504,7 @@
           </div>
 
           <!-- Acta Sanitaria Año de Visita -->
-          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+          <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Acta Sanitaria (Año Visita)</div>
             <input type="text" id="doc-status-acta" class="form-input" placeholder="Ej: 2025 / x / No aplica" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -515,7 +515,7 @@
           </div>
 
           <!-- Certificación Proveedor (SGC) -->
-          <div style="display:grid; grid-template-columns:1.8fr 0.5fr 0.5fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+          <div class="modal-doc-row col-4">
             <div style="font-weight:600; font-size:0.85rem;">Certificación SGC Proveedor</div>
             <input type="text" id="doc-status-cert-tipo" class="form-input" placeholder="Ej: FSSC 22000" style="padding:6px 10px; font-size:0.85rem;">
             <input type="text" id="doc-status-cert-vence" class="form-input" placeholder="Año: 2028" style="padding:6px 10px; font-size:0.85rem;">
@@ -527,7 +527,7 @@
           </div>
 
           <!-- Declaración de Alérgenos -->
-          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+          <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Decl. Alérgenos (Materia Prima)</div>
             <input type="text" id="doc-status-alergenos" class="form-input" placeholder="Ej: En carta 2026 / No aplica" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -538,7 +538,7 @@
           </div>
 
           <!-- Declaración Apto Alimentos -->
-          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+          <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Apto Alimentos (Envase/Tapa)</div>
             <input type="text" id="doc-status-apto" class="form-input" placeholder="Ej: No aplica / Si / x" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -549,7 +549,7 @@
           </div>
 
           <!-- Análisis FQ -->
-          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+          <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Análisis FQ (Metales/Pest.)</div>
             <input type="text" id="doc-status-fq" class="form-input" placeholder="Ej: Metales pesados 2022 / x" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -560,7 +560,7 @@
           </div>
 
           <!-- Cartas Firmadas: Fraude -->
-          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+          <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Carta Firmada: Fraude</div>
             <input type="text" id="doc-status-fraude" class="form-input" placeholder="Ej: Si / No / x" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -571,7 +571,7 @@
           </div>
 
           <!-- Cartas Firmadas: Especificación -->
-          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+          <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Carta Firmada: Especificación</div>
             <input type="text" id="doc-status-especificacion" class="form-input" placeholder="Ej: Si / No / x" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -582,7 +582,7 @@
           </div>
 
           <!-- Cartas Firmadas: Otras -->
-          <div style="display:grid; grid-template-columns:1.8fr 1fr 1.2fr; gap:12px; align-items:center; background:rgba(255,255,255,0.02); padding:10px; border-radius:var(--radius-sm); border:1px solid var(--glass-border);">
+          <div class="modal-doc-row">
             <div style="font-weight:600; font-size:0.85rem;">Carta Firmada: Otras</div>
             <input type="text" id="doc-status-otras" class="form-input" placeholder="Ej: vida util / Origen / GMO" style="padding:6px 10px; font-size:0.85rem;">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -658,6 +658,6 @@
   <script src="firebase-config.js"></script>
 
   <!-- App (Firebase version) -->
-  <script src="firebase-app.js?v=9"></script>
+  <script src="firebase-app.js?v=10"></script>
 </body>
 </html>
