@@ -407,34 +407,61 @@ function renderTable(suppliers) {
   function getStatusBadge(statusVal, fallbackVal = null) {
     const val = (statusVal || fallbackVal || '').trim();
     if (!val) return '<span class="badge badge-danger">✗</span>';
-    const valClean = val.toLowerCase();
-    if (valClean.startsWith('http://') || valClean.startsWith('https://')) {
-      return `<a href="${val}" target="_blank" class="badge badge-success" style="text-decoration:none;" title="Abrir Enlace">🔗 Link</a>`;
+    
+    const urlMatch = val.match(/(https?:\/\/[^\s]+)/i);
+    const isUrl = !!urlMatch;
+    const valUrl = isUrl ? urlMatch[1] : null;
+    
+    let displayVal = val;
+    if (isUrl) {
+      displayVal = val.replace(valUrl, '').replace(/\|/g, '').trim();
+      if (!displayVal) displayVal = 'Link';
     }
-    if (valClean === 'si' || valClean === 'completo') {
-      return '<span class="badge badge-success">✓ Si</span>';
+    
+    const valClean = displayVal.toLowerCase();
+    
+    let badgeHtml = '';
+    if (valClean === 'si' || valClean === 'completo' || valClean === 'link') {
+      badgeHtml = '<span class="badge badge-success">✓ Si</span>';
+    } else if (valClean === 'no' || valClean === 'x') {
+      badgeHtml = '<span class="badge badge-danger">✗ No</span>';
+    } else if (valClean === 'na' || valClean === 'n/a' || valClean.includes('aplica')) {
+      badgeHtml = '<span class="badge badge-neutral">N/A</span>';
+    } else {
+      const isCompleted = valClean === 'en carta' || /^\d{4}$/.test(valClean) || valClean.includes('vence') || valClean.includes('carta');
+      badgeHtml = `<span class="badge ${isCompleted ? 'badge-success' : 'badge-warning'}">${displayVal}</span>`;
     }
-    if (valClean === 'no' || valClean === 'x') {
-      return '<span class="badge badge-danger">✗ No</span>';
+    
+    if (isUrl) {
+      return `<a href="${valUrl}" target="_blank" style="text-decoration:none; display:inline-flex; align-items:center; gap:2px;" title="Abrir Enlace">${badgeHtml}<span style="font-size:0.72rem; filter:brightness(0.9);">🔗</span></a>`;
     }
-    if (valClean === 'na' || valClean === 'n/a' || valClean.includes('aplica')) {
-      return '<span class="badge badge-neutral">N/A</span>';
-    }
-    const isCompleted = valClean === 'en carta' || /^\d{4}$/.test(valClean) || valClean.includes('vence') || valClean.includes('carta');
-    if (isCompleted) {
-      return `<span class="badge badge-success">${val}</span>`;
-    }
-    return `<span class="badge badge-warning">${val}</span>`;
+    return badgeHtml;
   }
 
   function getCartaEmoji(val, fallbackVal) {
-    const status = (val || fallbackVal || '').trim().toLowerCase();
-    if (!status || status === 'no' || status === 'x') return '🔴';
-    if (status.startsWith('http://') || status.startsWith('https://')) {
-      return `<a href="${val || fallbackVal}" target="_blank" style="text-decoration:none;" title="Abrir Enlace">🔗</a>`;
+    const status = (val || fallbackVal || '').trim();
+    const urlMatch = status.match(/(https?:\/\/[^\s]+)/i);
+    const isUrl = !!urlMatch;
+    const valUrl = isUrl ? urlMatch[1] : null;
+    
+    let cleanStatus = status;
+    if (isUrl) {
+      cleanStatus = status.replace(valUrl, '').replace(/\|/g, '').trim().toLowerCase();
+    } else {
+      cleanStatus = status.toLowerCase();
     }
-    if (status === 'na' || status === 'n/a' || status.includes('aplica')) return '⚪';
-    return '🟢';
+    
+    let emoji = '🟢';
+    if (!cleanStatus || cleanStatus === 'no' || cleanStatus === 'x') {
+      emoji = isUrl ? '🟢' : '🔴';
+    } else if (cleanStatus === 'na' || cleanStatus === 'n/a' || cleanStatus.includes('aplica')) {
+      emoji = '⚪';
+    }
+    
+    if (isUrl) {
+      return `<a href="${valUrl}" target="_blank" style="text-decoration:none; display:inline-flex; align-items:center; gap:2px;" title="Abrir Enlace">${emoji}<span style="font-size:0.75rem;">🔗</span></a>`;
+    }
+    return emoji;
   }
 
   suppliers.forEach(s => {
@@ -610,26 +637,37 @@ function renderDrawerDocStatus() {
   
   items.forEach(item => {
     const valText = item.status || 'No';
-    const valClean = valText.toLowerCase().trim();
-    const isUrl = valClean.startsWith('http://') || valClean.startsWith('https://');
-    const isCompleted = isUrl || valClean === 'si' || valClean === 'en carta' || /^\d{4}$/.test(valClean) || valClean.includes('vence') || valClean.includes('completo') || valClean.includes('aplica') || valClean.includes('carta');
-    const isPending = !isUrl && (!item.status || valClean === 'no' || valClean === 'x' || valClean === '');
+    const valClean = valText.trim();
+    const urlMatch = valClean.match(/(https?:\/\/[^\s]+)/i);
+    const isUrl = !!urlMatch;
+    const valUrl = isUrl ? urlMatch[1] : null;
+    
+    let displayVal = valClean;
+    if (isUrl) {
+      displayVal = valClean.replace(valUrl, '').replace(/\|/g, '').trim();
+      if (!displayVal) displayVal = 'Enlace Adjunto';
+    }
+
+    const valCleanLower = displayVal.toLowerCase();
+    const isCompleted = isUrl || valCleanLower === 'si' || valCleanLower === 'en carta' || /^\d{4}$/.test(valCleanLower) || valCleanLower.includes('vence') || valCleanLower.includes('completo') || valCleanLower.includes('aplica') || valCleanLower.includes('carta');
+    const isPending = !isUrl && (!item.status || valCleanLower === 'no' || valCleanLower === 'x' || valCleanLower === '');
     const cardClass = isCompleted ? 'active' : isPending ? '' : 'warning';
     const icon = isCompleted ? '✓' : '✗';
     
     // Find file associated with this category
     const file = s.files?.find(f => f.category === item.category);
     let fileLinkHtml = '';
+    
     if (isUrl) {
-      fileLinkHtml = `<br><a href="${valText}" target="_blank" style="margin-top:6px; display:inline-block; font-size:0.75rem; color:var(--accent-color); text-decoration:none; font-weight:600; background:rgba(6,182,212,0.1); padding:3px 8px; border-radius:4px;">🔗 Abrir Enlace (Drive/Otro)</a>`;
-    } else if (file) {
-      const url = file.firebase_url || (window.location.hostname === 'localhost' && file.relative_path ? `/api/file/view?path=${encodeURIComponent(file.relative_path)}` : null);
-      if (url) {
-        fileLinkHtml = `<br><a href="${url}" target="_blank" style="margin-top:6px; display:inline-block; font-size:0.75rem; color:var(--accent-color); text-decoration:none; font-weight:600; background:rgba(6,182,212,0.1); padding:3px 8px; border-radius:4px;">📄 Abrir Documento</a>`;
-      }
+      fileLinkHtml = `<br><a href="${valUrl}" target="_blank" style="margin-top:6px; display:inline-block; font-size:0.75rem; color:var(--accent-color); text-decoration:none; font-weight:600; background:rgba(6,182,212,0.1); padding:3px 8px; border-radius:4px;">🔗 Abrir Enlace (Drive/Otro)</a>`;
     }
     
-    const displayVal = isUrl ? 'Enlace Adjunto' : valText;
+    if (file) {
+      const url = file.firebase_url || (window.location.hostname === 'localhost' && file.relative_path ? `/api/file/view?path=${encodeURIComponent(file.relative_path)}` : null);
+      if (url) {
+        fileLinkHtml += `${fileLinkHtml ? ' ' : '<br>'}<a href="${url}" target="_blank" style="margin-top:6px; display:inline-block; font-size:0.75rem; color:var(--accent-color); text-decoration:none; font-weight:600; background:rgba(6,182,212,0.1); padding:3px 8px; border-radius:4px;">📄 Abrir Documento</a>`;
+      }
+    }
     
     html += `
       <div class="doc-status-card ${cardClass}" style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:12px; height:auto; min-height:85px; border-left:4px solid ${isCompleted ? 'var(--success-color)' : isPending ? 'var(--danger-color)' : 'var(--warning-color)'};">
